@@ -10,44 +10,17 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { faHouse } from '@fortawesome/free-solid-svg-icons';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-
-
-const Tab = createBottomTabNavigator();
-
-
-import HomeScreen from './HomeScreen';
-import ProfileScreen from './ProfileScreen';
 
 const { width } = Dimensions.get('window');
 
-export default function Home() {
-    const navigation = useNavigation();
+export default function ProfileScreen() {
     const insets = useSafeAreaInsets();
 
     return (
-        <SafeAreaView style={[styles.container, { paddingBottom: insets.bottom || 0 }]}>
-
-
-            <Tab.Navigator
-                screenOptions={{
-                    tabBarStyle: {
-                        backgroundColor: '#2a2a2a',
-                        paddingBottom: insets.bottom || 12,
-                        height: 70, // adjust for visual spacing
-                        borderTopLeftRadius: 16,
-                        borderTopRightRadius: 16,
-                        position: 'absolute', // optional: makes it float
-                    },
-                    tabBarActiveTintColor: '#f3631a',
-                    tabBarInactiveTintColor: '#fff',
-                    headerShown: false, // optional if you don't want headers
-                }}
-            >
-                <Tab.Screen name="Home" component={HomeScreen} />
-                <Tab.Screen name="Profile" component={ProfileScreen} />
-            </Tab.Navigator>
-
+        <SafeAreaView style={[styles.container, { paddingBottom: insets.bottom || 10 }]}>
+            <View style={styles.content}>
+                <Text style={styles.title}>Profile Page</Text>
+            </View>
 
         </SafeAreaView>
     );

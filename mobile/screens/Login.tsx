@@ -42,7 +42,7 @@ export default function Login() {
 
       if (res.ok) {
         if (data.message === 'Login successful') {
-          setToken(data.token);
+          setToken(data.token); 
           navigation.navigate('Home' as never);
 
         } else if (data.message === 'MFA required') {
