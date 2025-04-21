@@ -4,10 +4,11 @@ export type RootStackParamList = {
   Landing: undefined;
   Login: undefined;
   Signup: undefined;
-  Home: undefined;
+  HomeNavigation: undefined;
   CompleteProfile: { userId: string; token: string };
   Packs: undefined,
   Routes: undefined,
+  Drive: undefined,
 };
 
 export type LandingScreenNavProp = NativeStackNavigationProp<RootStackParamList, 'Landing'>;

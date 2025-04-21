@@ -1,36 +1,84 @@
-import React, {useState} from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Dimensions,
-  FlatList,
-} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import React, {useState, useEffect} from 'react';
+import {View, Text, TouchableOpacity, FlatList, Alert} from 'react-native';
+import {styles} from '../styles/RoutesScreen.styles';
 
-const {width} = Dimensions.get('window');
+import {useNavigation} from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import CreateRouteModal from '../components/CreateRouteModal';
+import {SERVER_URI} from '../config';
+import {jwtDecode} from 'jwt-decode';
+import {ScrollView} from 'react-native-gesture-handler';
 
 export default function RoutesScreen() {
   const navigation = useNavigation();
-
   const [activeTab, setActiveTab] = useState<'my' | 'find'>('my');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [myRoutes, setMyRoutes] = useState<any[]>([]);
 
-  const myRoutes = [
-    {
-      id: '1',
-      from: 'BP - Pleasant Hill',
-      to: "Mazzy's",
-      distance: '2.3Mi',
-    },
-    // Add more routes if needed
-  ];
+  useEffect(() => {
+    const fetchRoutes = async () => {
+      try {
+        const token = await AsyncStorage.getItem('token');
 
-  const renderRouteCard = (route: (typeof myRoutes)[0]) => (
+        if (!token) {
+          Alert.alert('Authentication Error', 'Missing token');
+          return;
+        }
+
+        const decoded: any = jwtDecode(token);
+        const userId = decoded?.userID;
+
+        if (!userId) {
+          throw new Error(
+            'Invalid token payload. Missing user ID.\r\nUser ID: ',
+          );
+        }
+
+        const res = await fetch(`${SERVER_URI}/api/routes/user/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        const text = await res.text();
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          throw new Error(text);
+        }
+
+        if (!res.ok) {
+          throw new Error(data.message || 'Failed to fetch routes');
+        }
+
+        setMyRoutes(data);
+      } catch (err: any) {
+        Alert.alert('Error Fetching Routes', err.message);
+      }
+    };
+
+    fetchRoutes();
+  }, []);
+
+  const handleCreateRoute = (newRoute: any) => {
+    setMyRoutes(prev => [...prev, newRoute]);
+    setModalVisible(false);
+  };
+
+  const renderRouteCard = (route: any) => (
     <TouchableOpacity style={styles.routeCard}>
-      <Text style={styles.routeText}>{route.from}</Text>
-      <Text style={styles.routeText}>{route.to}</Text>
-      <Text style={styles.distance}>{route.distance}</Text>
+      <Text style={styles.routeName} numberOfLines={1} ellipsizeMode="tail">
+        {route.name || 'Unnamed'}
+      </Text>
+      <Text style={styles.routeText} numberOfLines={1} ellipsizeMode="tail">
+        {route.waypoints?.[0]?.label || 'Unknown'}
+      </Text>
+      <Text style={styles.routeText} numberOfLines={1} ellipsizeMode="tail">
+        {route.waypoints?.[1]?.label || 'Unknown'}
+      </Text>
+      <Text style={styles.distance}>{route.distance || '—'}</Text>
     </TouchableOpacity>
   );
 
@@ -64,18 +112,26 @@ export default function RoutesScreen() {
 
       <View style={styles.content}>
         {activeTab === 'my' ? (
-          <View>
+          <View style={{flex: 1}}>
             <View style={styles.plusBtnRow}>
-              <TouchableOpacity style={styles.plusBtn}>
+              <TouchableOpacity
+                style={styles.plusBtn}
+                onPress={() => setModalVisible(true)}>
                 <Text style={styles.plusIcon}>+</Text>
               </TouchableOpacity>
             </View>
 
-            <FlatList
-              data={myRoutes}
-              keyExtractor={item => item.id}
-              renderItem={({item}) => renderRouteCard(item)}
-            />
+            <ScrollView
+              bounces={true}
+              overScrollMode="always"
+              nestedScrollEnabled={true}
+              contentContainerStyle={{paddingBottom: 100}}>
+              {myRoutes.map(route => (
+                <View key={route._id || route.id}>
+                  {renderRouteCard(route)}
+                </View>
+              ))}
+            </ScrollView>
           </View>
         ) : (
           <Text style={styles.placeholder}>
@@ -83,87 +139,12 @@ export default function RoutesScreen() {
           </Text>
         )}
       </View>
+
+      <CreateRouteModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onCreate={handleCreateRoute}
+      />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#1e1e1e',
-    paddingTop: 60,
-    paddingHorizontal: 20,
-  },
-  tabs: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 20,
-  },
-  tab: {
-    alignItems: 'center',
-  },
-  tabText: {
-    fontSize: 16,
-    color: '#aaa',
-    fontWeight: '600',
-  },
-  activeTabText: {
-    color: '#f3631a',
-  },
-  underline: {
-    marginTop: 4,
-    height: 2,
-    width: 60,
-    backgroundColor: '#f3631a',
-    borderRadius: 2,
-  },
-  content: {
-    flex: 1,
-  },
-  routeCard: {
-    borderWidth: 1,
-    borderColor: '#888',
-    borderRadius: 8,
-    padding: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  routeText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  distance: {
-    color: '#aaa',
-    fontSize: 14,
-  },
-  placeholder: {
-    color: '#888',
-    textAlign: 'center',
-    marginTop: 40,
-  },
-  plusBtnRow: {
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginVertical: 20,
-    paddingRight: 20,
-  },
-
-  plusBtn: {
-    backgroundColor: 'transparent',
-    borderWidth: 0,
-    width: 42,
-    height: 42,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 0, // remove shadow
-  },
-  plusIcon: {
-    fontSize: 28,
-    color: '#f3631a',
-    fontWeight: 'bold',
-    lineHeight: 28,
-  },
-});

@@ -22,7 +22,7 @@ exports.login = async (req, res) => {
     return res.status(200).json({ message: 'MFA required', tempToken: generateTempToken(email) });
   }
 
-  const token = generateToken(email); // or generateToken(user._id) depending on your setup
+  const token = generateToken(email, user._id); // or generateToken(user._id) depending on your setup
 
   return res.status(200).json({
     message: 'Login successful',
@@ -77,7 +77,10 @@ exports.signup = async (req, res) => {
     // Save user
     await user.save();
 
-    const token = generateToken(user);
+    const userId = await User.findOne({ email })._id;
+
+
+    const token = generateToken(user, userId);
 
     res.status(201).json({
       message: 'Signup successful',

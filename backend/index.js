@@ -4,6 +4,8 @@ const cors = require('cors');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
+const routeRoutes = require('./routes/route');
+
 
 
 dotenv.config();
@@ -16,9 +18,11 @@ app.use(cors());
 app.use(express.json());
 app.use('/api', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/routes', routeRoutes);
 
 
-app.get('/', (req, res) => {
+
+app.get('/', (_req, res) => {
   res.send('🚀 Backend running');
 });
 
