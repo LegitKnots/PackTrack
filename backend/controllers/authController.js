@@ -22,8 +22,19 @@ exports.login = async (req, res) => {
     return res.status(200).json({ message: 'MFA required', tempToken: generateTempToken(email) });
   }
 
-  return res.status(200).json({ message: 'Login successful', token: generateToken(email) });
+  const token = generateToken(email); // or generateToken(user._id) depending on your setup
+
+  return res.status(200).json({
+    message: 'Login successful',
+    token,
+    user: {
+      id: user._id,
+      email: user.email,
+      fullname: user.fullname,
+    },
+  });
 };
+
 
 exports.verifyMFA = async (req, res) => {
   const { otp, token } = req.body;
@@ -47,10 +58,10 @@ exports.verifyMFA = async (req, res) => {
 
 exports.signup = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { fullname, email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required.' });
+    if (!fullname || !email || !password) {
+      return res.status(400).json({ message: 'Full name, email, and password are required.' });
     }
 
     // Check if user already exists
@@ -59,9 +70,11 @@ exports.signup = async (req, res) => {
       return res.status(400).json({ message: 'Email already registered' });
     }
 
-    // Create and save new user using model's setPassword()
-    const user = new User({ email });
+    // Create user and set password hash
+    const user = new User({ fullname, email });
     await user.setPassword(password);
+
+    // Save user
     await user.save();
 
     const token = generateToken(user);
@@ -72,10 +85,21 @@ exports.signup = async (req, res) => {
       user: {
         id: user._id,
         email: user.email,
+        fullname: user.fullname,
       },
     });
   } catch (err) {
-    console.error('Signup error:', err);
+    console.error('Signup error:', err.message);
+
+    if (err.name === 'ValidationError') {
+      const messages = Object.values(err.errors).map(e => e.message);
+      return res.status(400).json({ message: messages.join(', ') });
+    }
+
+    if (err.code === 11000) {
+      return res.status(400).json({ message: 'Email already exists' });
+    }
+
     res.status(500).json({ message: 'Internal server error' });
   }
 };

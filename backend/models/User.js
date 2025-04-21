@@ -2,22 +2,18 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs'); // swapped out bcrypt
 
 const UserSchema = new mongoose.Schema({
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    lowercase: true,
-    trim: true,
-  },
-  passwordHash: {
-    type: String,
-    required: true,
-  },
-  mfaEnabled: {
-    type: Boolean,
-    default: false,
-  }
-});
+  username: { type: String, default: '', unique: true },
+  email: { type: String, required: true, unique: true },
+  passwordHash: { type: String, required: true },
+  mfaEnabled: { type: Boolean, default: false },
+  mfaSecret: { type: String },
+  fullname: { type: String },
+  packs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Pack' }],
+  bike: { type: String },
+  bio: { type: String },
+  location: { type: String },
+  profilePicUrl: { type: String, default: "" }
+}, { timestamps: true });
 
 // Hash and set password
 UserSchema.methods.setPassword = async function (password) {

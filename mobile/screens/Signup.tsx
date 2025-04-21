@@ -6,25 +6,28 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
-  ScrollView,
   Dimensions,
   KeyboardAvoidingView,
-  Platform
+  Platform,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../types/navigation';
 import { SERVER_URI } from '../config';
 
 const { width } = Dimensions.get('window');
 
+// ✅ Typed navigation hook
+type SignupScreenNavProp = NativeStackNavigationProp<RootStackParamList, 'Signup'>;
+
 export default function SignupScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<SignupScreenNavProp>();
   const [form, setForm] = useState({
-    name: '',
+    fullname: '',
     email: '',
     password: '',
     verifyPassword: '',
-    phone: '',
   });
 
   const handleChange = (field: string, value: string) => {
@@ -32,14 +35,23 @@ export default function SignupScreen() {
   };
 
   const handleSignup = async () => {
-    if(form.password !== form.verifyPassword){
-      Alert.alert('Passwords do not match');
+    const { fullname, email, password, verifyPassword } = form;
+
+    if (!fullname || !email || !password || !verifyPassword) {
+      Alert.alert('Please fill in all fields');
+      return;
     }
+
+    if (password !== verifyPassword) {
+      Alert.alert('Passwords do not match');
+      return;
+    }
+
     try {
       const res = await fetch(`${SERVER_URI}/api/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ fullname, email, password }),
       });
 
       const data = await res.json();
@@ -50,8 +62,13 @@ export default function SignupScreen() {
       }
 
       await AsyncStorage.setItem('token', data.token);
-      await AsyncStorage.setItem('email', form.email);
-      navigation.navigate('Home' as never);
+      await AsyncStorage.setItem('email', email);
+      await AsyncStorage.setItem('userId', data.user.id);
+
+      navigation.navigate('CompleteProfile', {
+        userId: data.user.id,
+        token: data.token,
+      });
     } catch (err) {
       console.error('Signup error:', err);
       Alert.alert('Error', 'Something went wrong');
@@ -63,33 +80,24 @@ export default function SignupScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <Text style={styles.title}>Create an</Text>
-      <Text style={styles.title}>Account</Text>
-
+      <Text style={styles.title}>Create Account</Text>
 
       <View style={styles.formView}>
         <TextInput
           style={styles.input}
           placeholder="Full Name"
           placeholderTextColor="#aaa"
-          value={form.name}
-          onChangeText={(text) => handleChange('name', text)}
+          value={form.fullname}
+          onChangeText={(text) => handleChange('fullname', text)}
         />
         <TextInput
           style={styles.input}
           placeholder="Email"
           placeholderTextColor="#aaa"
           keyboardType="email-address"
+          autoCapitalize="none"
           value={form.email}
           onChangeText={(text) => handleChange('email', text)}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Phone Number"
-          placeholderTextColor="#aaa"
-          keyboardType="phone-pad"
-          value={form.phone}
-          onChangeText={(text) => handleChange('phone', text)}
         />
         <TextInput
           style={styles.input}
@@ -101,7 +109,7 @@ export default function SignupScreen() {
         />
         <TextInput
           style={styles.input}
-          placeholder="Verify Password"
+          placeholder="Confirm Password"
           placeholderTextColor="#aaa"
           secureTextEntry
           value={form.verifyPassword}
@@ -112,7 +120,7 @@ export default function SignupScreen() {
           <Text style={styles.buttonText}>Sign Up</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => navigation.navigate('Login' as never)}>
+        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
           <Text style={styles.switchText}>Already have an account? Log in</Text>
         </TouchableOpacity>
       </View>
@@ -126,17 +134,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#1e1e1e',
-    paddingHorizontal: 0,
+    paddingHorizontal: 20,
   },
   title: {
-    fontSize: 48,
+    fontSize: 42,
     fontWeight: 'bold',
     color: '#f3631a',
-    marginBottom: 0,
+    marginBottom: 20,
   },
   formView: {
-    marginTop: 50,
     alignItems: 'center',
+    width: '100%',
   },
   input: {
     color: '#fff',
@@ -144,17 +152,17 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 15,
     paddingVertical: 12,
-    width: width * 0.75,
+    width: width * 0.85,
     fontSize: 16,
     marginBottom: 15,
   },
   button: {
     backgroundColor: '#f3631a',
     paddingVertical: 15,
-    width: width * 0.65,
+    width: width * 0.7,
     borderRadius: 8,
     alignItems: 'center',
-    marginBottom: 15,
+    marginTop: 10,
   },
   buttonText: {
     color: '#fff',
@@ -162,7 +170,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   switchText: {
-    marginTop: 20,
+    marginTop: 25,
     color: '#aaa',
+    fontSize: 14,
   },
 });

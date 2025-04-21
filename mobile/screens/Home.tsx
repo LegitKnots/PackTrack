@@ -18,6 +18,9 @@ const Tab = createBottomTabNavigator();
 
 import HomeScreen from './HomeScreen';
 import ProfileScreen from './ProfileScreen';
+import PacksScreen from './PacksScreen';
+import RoutesScreen from './RoutesScreen';
+
 
 const { width } = Dimensions.get('window');
 
@@ -44,7 +47,9 @@ export default function Home() {
                     headerShown: false, // optional if you don't want headers
                 }}
             >
-                <Tab.Screen name="Home" component={HomeScreen} />
+                <Tab.Screen name="Dashboard" component={HomeScreen} />
+                <Tab.Screen name="Packs" component={PacksScreen} />
+                <Tab.Screen name="Routes" component={RoutesScreen} />
                 <Tab.Screen name="Profile" component={ProfileScreen} />
             </Tab.Navigator>
 

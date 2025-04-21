@@ -11,18 +11,18 @@ import {
   Alert,
 } from 'react-native';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
-
 import { SERVER_URI } from '../config';
 
 const { width } = Dimensions.get('window');
+
 export default function Login() {
   const [step, setStep] = useState<'login' | 'mfa'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
   const [token, setToken] = useState('');
-
   const navigation = useNavigation();
 
   const handleLogin = async () => {
@@ -42,11 +42,15 @@ export default function Login() {
 
       if (res.ok) {
         if (data.message === 'Login successful') {
-          setToken(data.token); 
-          navigation.navigate('Home' as never);
+          await AsyncStorage.setItem('token', data.token);
+          await AsyncStorage.setItem('userId', data.user.id);
+          await AsyncStorage.setItem('email', data.user.email);
+          await AsyncStorage.setItem('fullname', data.user.fullname);
 
+
+          navigation.navigate('Home' as never);
         } else if (data.message === 'MFA required') {
-          setToken(data.tempToken); // optional: backend might give a temp token
+          setToken(data.tempToken);
           setStep('mfa');
         } else {
           Alert.alert('Unknown response', data.message);
@@ -76,7 +80,11 @@ export default function Login() {
       const data = await res.json();
 
       if (res.ok && data.message === 'MFA verified') {
-        // navigation.navigate('Home') or whatever
+        await AsyncStorage.setItem('token', data.token);
+        await AsyncStorage.setItem('userId', data.user.id);
+        await AsyncStorage.setItem('email', data.user.email);
+
+        navigation.navigate('Home' as never);
       } else {
         Alert.alert('Invalid code', data.message || 'Try again');
       }
