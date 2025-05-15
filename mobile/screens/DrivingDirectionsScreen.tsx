@@ -1,222 +1,190 @@
-import React, { useEffect, useRef, useState } from 'react';
+// NavigationScreen.tsx
+
+import React, { useEffect, useState, useRef } from 'react';
 import {
-  PermissionsAndroid,
-  Platform,
   View,
   Text,
-  Image,
+  StyleSheet,
+  Dimensions,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
-import { styles } from '../styles/DrivingDirections.styles';
-import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from 'react-native-maps';
-import Geolocation from 'react-native-geolocation-service';
-import MapViewDirections from 'react-native-maps-directions';
-import { GOOGLE_MAPS_APIKEY } from '../config';
+import MapView, {
+  Marker,
+  Polyline,
+  Region,
+  LatLng,
+  UserLocationChangeEvent,
+} from 'react-native-maps';
 
-function calculateBearing(start: { latitude: number; longitude: number }, end: { latitude: number; longitude: number }) {
-  const lat1 = (start.latitude * Math.PI) / 180;
-  const lon1 = (start.longitude * Math.PI) / 180;
-  const lat2 = (end.latitude * Math.PI) / 180;
-  const lon2 = (end.longitude * Math.PI) / 180;
+const { width, height } = Dimensions.get('window');
 
-  const dLon = lon2 - lon1;
-  const y = Math.sin(dLon) * Math.cos(lat2);
-  const x =
-    Math.cos(lat1) * Math.sin(lat2) -
-    Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
-  const bearing = (Math.atan2(y, x) * 180) / Math.PI;
-  return (bearing + 360) % 360;
+function getDistance(a: LatLng, b: LatLng): number {
+  const toRad = (x: number) => (x * Math.PI) / 180;
+  const R = 6371000; // meters
+  const dLat = toRad(b.latitude - a.latitude);
+  const dLon = toRad(b.longitude - a.longitude);
+  const lat1 = toRad(a.latitude);
+  const sinDlat = Math.sin(dLat / 2);
+  const sinDlon = Math.sin(dLon / 2);
+  const h =
+    sinDlat * sinDlat +
+    sinDlon * sinDlon * Math.cos(lat1) * Math.cos(toRad(b.latitude));
+  return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
 }
 
-function getClosestPointOnPath(
-  path: { latitude: number; longitude: number }[],
-  point: { latitude: number; longitude: number }
-) {
-  let closest = path[0];
-  let minDist = Number.MAX_VALUE;
-  let index = 0;
+const INITIAL_REGION: Region = {
+  latitude: 37.7749,
+  longitude: -122.4194,
+  latitudeDelta: 0.1,
+  longitudeDelta: 0.1,
+};
 
-  for (let i = 0; i < path.length; i++) {
-    const dx = path[i].latitude - point.latitude;
-    const dy = path[i].longitude - point.longitude;
-    const dist = dx * dx + dy * dy;
-    if (dist < minDist) {
-      minDist = dist;
-      closest = path[i];
-      index = i;
-    }
-  }
+const ORIGIN: LatLng = { latitude: 37.7749, longitude: -122.4194 };
+const DEST: LatLng   = { latitude: 37.7739, longitude: -122.4313 };
 
-  return { snapped: closest, index };
-}
+// Your public Mapbox token
+const MAPBOX_TOKEN = 'pk.eyJ1IjoicmVhbGtub3RzIiwiYSI6ImNtYW9uc3c0bDA5djQybHE4ZzBxYWlzYnQifQ.nIDhH3d6t-t-7MFMN-VEZg';
 
-export default function DrivingDirectionsScreen() {
-  const [rawPosition, setRawPosition] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [snappedPosition, setSnappedPosition] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [routePath, setRoutePath] = useState<{ latitude: number; longitude: number }[]>([]);
-  const [trimmedPath, setTrimmedPath] = useState<{ latitude: number; longitude: number }[]>([]);
-  const [routeHeading, setRouteHeading] = useState<number>(0);
-  const [routeReady, setRouteReady] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+type Step = {
+  instruction: string;
+  location: LatLng;
+};
 
-  const mapRef = useRef<MapView | null>(null);
-  const lastHeadingRef = useRef<number>(0);
+export default function NavigationScreen() {
+  const [routeCoords, setRouteCoords] = useState<LatLng[]>([]);
+  const [steps, setSteps] = useState<Step[]>([]);
+  const [currentStep, setCurrentStep] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(true);
+  const mapRef = useRef<MapView>(null);
 
-  const destination = {
-    latitude: 33.7490,
-    longitude: -84.3880,
-  };
-
+  // Fetch route & steps
   useEffect(() => {
-    let watchId: number;
-
-    const startTracking = async () => {
+    (async () => {
       try {
-        if (Platform.OS === 'android') {
-          const granted = await PermissionsAndroid.request(
-            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
-          );
-          if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-            setError('Location permission denied');
-            return;
-          }
+        const url =
+          'https://api.mapbox.com/directions/v5/mapbox/driving/' +
+          `${ORIGIN.longitude},${ORIGIN.latitude};${DEST.longitude},${DEST.latitude}` +
+          `?geometries=geojson&steps=true&overview=full&access_token=${MAPBOX_TOKEN}`;
+
+        const res = await fetch(url);
+        const json = await res.json();
+        if (!json.routes?.length) {
+          Alert.alert('Error', 'No route returned');
+          return;
         }
 
-        watchId = Geolocation.watchPosition(
-          (position) => {
-            const { latitude, longitude, heading, speed } = position.coords;
-            const gpsCoords = { latitude, longitude };
-            setRawPosition(gpsCoords);
-
-            if (routePath.length >= 2) {
-              const { snapped, index } = getClosestPointOnPath(routePath, gpsCoords);
-              setSnappedPosition(snapped);
-              setTrimmedPath(routePath.slice(index));
-
-              const nextPoint = routePath[index + 1] ?? destination;
-              const fallbackHeading = calculateBearing(snapped, nextPoint);
-              const gpsHeading = (heading && speed && speed > 0.5) ? heading : fallbackHeading;
-
-              // Smooth wraparound at 0/360
-              const last = lastHeadingRef.current;
-              const delta = Math.abs(gpsHeading - last);
-              const headingSmoothed = delta > 5 ? gpsHeading : last;
-              lastHeadingRef.current = headingSmoothed;
-
-              if (routeReady && mapRef.current) {
-                mapRef.current.animateCamera(
-                  {
-                    center: snapped,
-                    heading: headingSmoothed,
-                    pitch: 60,
-                    zoom: 18,
-                    altitude: 300,
-                  },
-                  { duration: 500 }
-                );
-              }
-            }
-          },
-          (error) => {
-            console.error('Geolocation error:', error);
-            setError('Failed to get location: ' + error.message);
-          },
-          {
-            enableHighAccuracy: true,
-            distanceFilter: 1,
-            interval: 2000,
-            fastestInterval: 1000,
-          }
+        // Polyline
+        const coords = json.routes[0].geometry.coordinates.map(
+          ([lng, lat]: [number, number]) => ({
+            latitude: lat,
+            longitude: lng,
+          })
         );
+        setRouteCoords(coords);
+
+        // Steps
+        const all: Step[] = [];
+        json.routes[0].legs.forEach((leg: any) =>
+          leg.steps.forEach((st: any) =>
+            all.push({
+              instruction: st.maneuver.instruction,
+              location: {
+                latitude: st.maneuver.location[1],
+                longitude: st.maneuver.location[0],
+              },
+            })
+          )
+        );
+        setSteps(all);
       } catch (err) {
-        console.error('Permission error:', err);
-        setError('Unexpected error occurred.');
+        console.error(err);
+        Alert.alert('Network error', 'Could not fetch directions');
+      } finally {
+        setLoading(false);
       }
+    })();
+  }, []);
+
+  // Advance when user gets close enough
+  const onUserLocationChange = (e: UserLocationChangeEvent) => {
+    const coord = e.nativeEvent.coordinate;
+    if (!coord) {return;}
+    // strip extras:
+    const loc: LatLng = {
+      latitude: coord.latitude,
+      longitude: coord.longitude,
     };
+    let idx = currentStep;
+    while (idx < steps.length && getDistance(loc, steps[idx].location) < 30) {
+      idx++;
+    }
+    if (idx !== currentStep) {
+      setCurrentStep(idx);
+    }
+  };
 
-    startTracking();
-
-    return () => {
-      if (watchId !== undefined) {
-        Geolocation.clearWatch(watchId);
-      }
-    };
-  }, [routePath, routeReady]);
-
-  if (error) {
+  if (loading) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.error}>{error}</Text>
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#f3631a" />
       </View>
     );
   }
 
   return (
-    <MapView
-      ref={mapRef}
-      provider={PROVIDER_GOOGLE}
-      style={{ flex: 1 }}
-      initialRegion={{
-        latitude: destination.latitude,
-        longitude: destination.longitude,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      }}
-      showsUserLocation={false}
-      followsUserLocation={false}
-      showsMyLocationButton={false}
-      showsTraffic={true}
-      pitchEnabled={true}
-      rotateEnabled={true}
-      userInterfaceStyle="dark"
-    >
-      {snappedPosition && (
-        <Marker
-          coordinate={snappedPosition}
-          anchor={{ x: 0.5, y: 0.5 }}
-          flat={true}
-          rotation={lastHeadingRef.current}
-        >
-          <Image
-            source={require('../assets/gps-arrow-default.png')}
-            style={{ width: 40, height: 40, }}
-            resizeMode="contain"
+    <View style={styles.container}>
+      <MapView
+        ref={mapRef}
+        style={styles.map}
+        initialRegion={INITIAL_REGION}
+        showsUserLocation
+        followsUserLocation
+        onUserLocationChange={onUserLocationChange}
+      >
+        <Polyline
+          coordinates={routeCoords}
+          strokeColor="#f3631a"
+          strokeWidth={4}
+        />
+        {steps.map((s, i) => (
+          <Marker
+            key={i}
+            coordinate={s.location}
+            title={`${i + 1}`}
+            pinColor={i === currentStep ? 'blue' : 'gray'}
           />
-        </Marker>
-      )}
-
-      {/* Route ahead */}
-      <Polyline
-        coordinates={trimmedPath.length > 0 ? trimmedPath : routePath}
-        strokeColor="blue"
-        strokeWidth={6}
-      />
-
-      <Marker coordinate={destination} title="Destination" />
-
-      <MapViewDirections
-        origin={rawPosition ?? destination}
-        destination={destination}
-        apikey={GOOGLE_MAPS_APIKEY}
-        strokeWidth={0}
-        strokeColor="transparent"
-        optimizeWaypoints={true}
-        onError={(err) => {
-          console.warn('Directions error:', err);
-          setError('Could not load directions');
-        }}
-        onReady={(result) => {
-          const coords = [...result.coordinates];
-          setRoutePath(coords);
-
-          if (!routeReady) {
-            mapRef.current?.fitToCoordinates(coords, {
-              edgePadding: { top: 100, right: 50, bottom: 50, left: 50 },
-              animated: true,
-            });
-            setRouteReady(true);
-          }
-        }}
-      />
-    </MapView>
+        ))}
+      </MapView>
+      <View style={styles.instruction}>
+        <Text style={styles.instructionText}>
+          {currentStep < steps.length
+            ? steps[currentStep].instruction
+            : "You've arrived 🎉"}
+        </Text>
+        {currentStep < steps.length && (
+          <Text style={styles.stepCount}>
+            Step {currentStep + 1} of {steps.length}
+          </Text>
+        )}
+      </View>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  map: { width, height },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  instruction: {
+    position: 'absolute',
+    bottom: 32,
+    left: 16,
+    right: 16,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    padding: 12,
+    borderRadius: 8,
+  },
+  instructionText: { color: '#fff', fontSize: 16, marginBottom: 4 },
+  stepCount: { color: '#aaa', fontSize: 12, textAlign: 'right' },
+});

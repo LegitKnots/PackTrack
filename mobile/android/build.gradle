@@ -1,34 +1,38 @@
+// android/build.gradle
+
 buildscript {
     ext {
-        buildToolsVersion = "35.0.0"
-        minSdkVersion = 24
-        compileSdkVersion = 35
-        targetSdkVersion = 35
-        ndkVersion = "26.3.11579264"
-        kotlinVersion = "2.0.21"
+        buildToolsVersion   = "35.0.0"
+        minSdkVersion       = 24
+        compileSdkVersion   = 35
+        targetSdkVersion    = 35
+        ndkVersion          = "26.3.11579264"
+        kotlinVersion       = "1.8.22"
     }
     repositories {
         google()
         mavenCentral()
+        // Mapbox private Maven for SDK downloads (needed on classpath resolution)
+        maven {
+            url = uri("https://api.mapbox.com/downloads/v2/releases/maven")
+            authentication {
+                basic(BasicAuthentication)
+            }
+            credentials {
+                username = "mapbox"
+                password = project.properties["MAPBOX_DOWNLOADS_TOKEN"] ?: ""
+            }
+        }
     }
     dependencies {
-        classpath("com.android.tools.build:gradle")
+        classpath("com.android.tools.build:gradle:8.1.0")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
         classpath("com.facebook.react:react-native-gradle-plugin")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+        // If you’re using the Mapbox Navigation Gradle Plugin:
+        // classpath("com.mapbox.navigation:android:2.17.0")
     }
 }
 
 apply plugin: "com.facebook.react.rootproject"
 
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
-
-    configurations.all {
-        resolutionStrategy {
-            force 'com.google.android.gms:play-services-location:21.0.1'
-        }
-    }
-}
+// No allprojects { repositories { ... } } here — repository management is now in settings.gradle

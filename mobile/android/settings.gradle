@@ -1,6 +1,55 @@
-pluginManagement { includeBuild("../node_modules/@react-native/gradle-plugin") }
-plugins { id("com.facebook.react.settings") }
-extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
+// android/settings.gradle
+
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+
+        // Mapbox private Maven (for plugin resolution)
+        maven {
+            url = uri("https://api.mapbox.com/downloads/v2/releases/maven")
+            authentication {
+                basic(BasicAuthentication)
+            }
+            credentials {
+                username = "mapbox"
+                password = "sk.eyJ1IjoicmVhbGtub3RzIiwiYSI6ImNtYW9xYWUzcjA2bW8ybnB0aXhjenRrY24ifQ.1HqzhB6Mk0XAhX8-N93W4Q"
+            }
+        }
+    }
+    includeBuild("../node_modules/@react-native/gradle-plugin")
+}
+
+plugins {
+    id("com.facebook.react.settings")
+}
+
+extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
+    ex.autolinkLibrariesFromCommand()
+}
+
+dependencyResolutionManagement {
+    // allow project repos as fallbacks
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories {
+        google()
+        mavenCentral()
+
+        // Mapbox private Maven (for all modules)
+        maven {
+            url = uri("https://api.mapbox.com/downloads/v2/releases/maven")
+            authentication {
+                basic(BasicAuthentication)
+            }
+            credentials {
+                username = "mapbox"
+                password = "sk.eyJ1IjoicmVhbGtub3RzIiwiYSI6ImNtYW9xYWUzcjA2bW8ybnB0aXhjenRrY24ifQ.1HqzhB6Mk0XAhX8-N93W4Q"
+            }
+        }
+    }
+}
+
 rootProject.name = 'mobile'
 include ':app'
 includeBuild('../node_modules/@react-native/gradle-plugin')
