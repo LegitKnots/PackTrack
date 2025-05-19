@@ -4,6 +4,7 @@ import { styles } from '../styles/HomeNavigation.styles';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { PRIMARY_APP_COLOR } from '../config';
 
 
 const Tab = createBottomTabNavigator();
@@ -27,14 +28,15 @@ export default function HomeNavigation() {
             <Tab.Navigator
                 screenOptions={{
                     tabBarStyle: {
-                        backgroundColor: '#2a2a2a',
+                        backgroundColor: '#111',
                         paddingBottom: insets.bottom || 12,
                         height: 70,
+                        borderTopWidth: 0,
                         borderTopLeftRadius: 16,
                         borderTopRightRadius: 16,
                         position: 'absolute',
                     },
-                    tabBarActiveTintColor: '#f3631a',
+                    tabBarActiveTintColor: PRIMARY_APP_COLOR,
                     tabBarInactiveTintColor: '#fff',
                     headerShown: false,
                 }}

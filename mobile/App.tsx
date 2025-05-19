@@ -15,7 +15,9 @@ import Login from './screens/Login';
 import Signup from './screens/Signup';
 import HomeNavigation from './screens/HomeNavigation';
 import CompleteProfileScreen from './screens/CompleteProfile';
+import RouteDetailsScreen from './screens/RouteDetailsScreen';
 import DrivingDirectionsScreen from './screens/DrivingDirectionsScreen';
+
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -43,6 +45,7 @@ export default function App() {
               component={CompleteProfileScreen}
             />
             <Stack.Screen name="Drive" component={DrivingDirectionsScreen} />
+            <Stack.Screen name="RouteDetails" component={RouteDetailsScreen}/>
           </Stack.Navigator>
         </NavigationContainer>
       </SafeAreaProvider>

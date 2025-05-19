@@ -9,6 +9,18 @@ export type RootStackParamList = {
   Packs: undefined,
   Routes: undefined,
   Drive: undefined,
+  // RouteDetails: {route: RouteType;},
+  RouteDetails: {route:any}
+};
+
+export type RouteType = {
+  name: string;
+  description?: string;
+  waypoints: { label: string; latitude: number; longitude: number }[];
+  distance: string;
+  creator: string;
+  collaborators: string[];
+  polyline?: { latitude: number; longitude: number }[];
 };
 
 export type LandingScreenNavProp = NativeStackNavigationProp<RootStackParamList, 'Landing'>;
