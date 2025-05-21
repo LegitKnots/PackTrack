@@ -1,43 +1,147 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet } from "react-native"
 
 export const styles = StyleSheet.create({
-    container: {
-      padding: 24,
-      flex: 1,
-      justifyContent: 'center',
-      backgroundColor: '#1e1e1e',
-    },
-    header: {
-      fontSize: 22,
-      color: '#fff',
-      marginBottom: 20,
-      fontWeight: 'bold',
-    },
-    input: {
-      backgroundColor: '#333',
-      color: '#fff',
-      padding: 10,
-      marginBottom: 16,
-      borderRadius: 8,
-    },
-    buttonRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-around',
-      marginTop: 20,
-    },
-    buttonPrimary: {
-      backgroundColor: '#f3631a',
-      padding: 12,
-      borderRadius: 8,
-    },
-    buttonCancel: {
-      backgroundColor: '#555',
-      padding: 12,
-      borderRadius: 8,
-    },
-    buttonText: {
-      color: '#fff',
-      fontWeight: 'bold',
-    },
-  });
-  
+  container: {
+    padding: 16,
+    flex: 1,
+    backgroundColor: "#1e1e1e",
+  },
+  header: {
+    fontSize: 20,
+    color: "#fff",
+    marginBottom: 16,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  input: {
+    backgroundColor: "#333",
+    color: "#fff",
+    padding: 10,
+    marginBottom: 12,
+    borderRadius: 8,
+    fontSize: 15,
+  },
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 16,
+  },
+  buttonPrimary: {
+    backgroundColor: "#f3631a",
+    padding: 10,
+    borderRadius: 8,
+    flex: 1,
+    marginLeft: 8,
+    alignItems: "center",
+  },
+  buttonCancel: {
+    backgroundColor: "#555",
+    padding: 10,
+    borderRadius: 8,
+    flex: 1,
+    marginRight: 8,
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 15,
+  },
+  toggleContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+    backgroundColor: "#2a2a2a",
+    padding: 10,
+    borderRadius: 8,
+  },
+  toggleLabel: {
+    color: "#fff",
+    fontSize: 15,
+  },
+  toggleOptions: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  toggleText: {
+    color: "#aaa",
+    marginHorizontal: 6,
+    fontSize: 14,
+  },
+  activeToggleText: {
+    color: "#f3631a",
+    fontWeight: "500",
+  },
+  subLabel: {
+    color: "#aaa",
+    fontSize: 14,
+    marginBottom: 4,
+    marginTop: 8,
+  },
+  coordinateContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  coordinateField: {
+    flex: 1,
+    marginRight: 6,
+  },
+  coordinateLabel: {
+    color: "#aaa",
+    fontSize: 13,
+    marginBottom: 2,
+  },
+  coordinateInput: {
+    backgroundColor: "#333",
+    color: "#fff",
+    padding: 8,
+    borderRadius: 6,
+    fontSize: 15,
+  },
+  modalHeader: {
+    fontSize: 18,
+    color: "#fff",
+    marginBottom: 16,
+    fontWeight: "bold",
+  },
+  searchModalContainer: {
+    flex: 1,
+    backgroundColor: "#1e1e1e",
+    padding: 16,
+  },
+  suggestionItem: {
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#333",
+  },
+  suggestionText: {
+    color: "#ccc",
+    fontSize: 15,
+  },
+  searchingText: {
+    color: "#777",
+    textAlign: "center",
+    fontSize: 15,
+    marginTop: 20,
+  },
+  cancelButtonText: {
+    color: "#f3631a",
+    fontSize: 15,
+    textAlign: "center",
+  },
+  sectionDivider: {
+    height: 1,
+    backgroundColor: "#333",
+    marginVertical: 12,
+  },
+  compactInput: {
+    backgroundColor: "#333",
+    color: "#fff",
+    padding: 8,
+    marginBottom: 10,
+    borderRadius: 6,
+    fontSize: 15,
+  },
+})

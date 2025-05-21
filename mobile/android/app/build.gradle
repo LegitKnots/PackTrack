@@ -22,6 +22,8 @@ android {
         versionCode 1
         versionName "1.0"
 
+        missingDimensionStrategy 'react-native-camera', 'general'
+
         // Provide the Mapbox token placeholder to the manifest merger
         manifestPlaceholders = [
             MAPBOX_DOWNLOADS_TOKEN: project.findProperty("MAPBOX_DOWNLOADS_TOKEN") ?: ""
