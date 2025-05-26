@@ -329,8 +329,15 @@ export default function PacksScreen() {
   const renderPackCard = (pack: PackDetails) => (
     <TouchableOpacity
       style={styles.packCard}
-      onPress={() => navigation.navigate("PackDetails", { pack })}
       key={pack.id}
+      onPress={() => {
+        if (activeTab !== 'find') {
+          navigation.navigate("PackDetails", { pack });
+        } else {
+          setPreviewModalVisible(true);
+          setPreviewPack(pack);
+        }
+      }}
     >
       <View style={styles.packCardContent}>
         {pack.imageUrl ? (
@@ -598,7 +605,7 @@ export default function PacksScreen() {
                 style={[
                   styles.filterButton,
                   ((Array.isArray(filters.tags) && filters.tags.length > 0) || filters.hasChat !== null) &&
-                    styles.filterButtonActive,
+                  styles.filterButtonActive,
                 ]}
                 onPress={() => setFilterModalVisible(true)}
               >

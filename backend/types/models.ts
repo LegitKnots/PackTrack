@@ -17,6 +17,7 @@ export interface User {
   updatedAt: Timestamp
   notifications?: Notifications[]
 }
+
 export interface Notifications {
   id: string
   userId: string
@@ -25,6 +26,7 @@ export interface Notifications {
   data: string
   read: boolean
   createdAt: Timestamp
+  updatedAt?: Timestamp
 }
 
 export interface Route {

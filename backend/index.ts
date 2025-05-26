@@ -12,6 +12,7 @@ import userRoute from "./routes/user"
 import routeRoute from "./routes/route"
 import packRoute from "./routes/pack"
 import searchRoute from "./routes/search"
+import notificationRoute from "./routes/notifications"
 import chatRoute from "./routes/chat"
 import shareLinkHandler from "./handlers/share"
 
@@ -29,6 +30,7 @@ app.use(express.json())
 // Routes
 app.use("/api", authRoute)
 app.use("/api/users", userRoute)
+app.use("/api/users", notificationRoute)
 app.use("/api/routes", routeRoute)
 app.use("/api/packs", packRoute)
 app.use("/api/search", searchRoute)

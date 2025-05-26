@@ -167,16 +167,6 @@ export default function PackPreviewModal({
               <Text style={styles.statValue}>{getPackAge(pack.createdAt)}</Text>
               <Text style={styles.statLabel}>Age</Text>
             </View>
-
-            {pack.options?.hasChat && (
-              <View style={styles.statItem}>
-                <View style={styles.statIcon}>
-                  <MessageCircle color={PRIMARY_APP_COLOR} size={20} />
-                </View>
-                <Text style={styles.statValue}>✓</Text>
-                <Text style={styles.statLabel}>Chat</Text>
-              </View>
-            )}
           </View>
 
           {/* Owner Info */}
