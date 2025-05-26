@@ -72,6 +72,9 @@ dependencies {
     // (Optional) Standalone Maps SDK if you need direct map APIs
     implementation("com.mapbox.maps:android:10.18.4")
 
+    implementation project(':react-native-keyboard-controller')
+
+
     // Hermes or JSC
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")

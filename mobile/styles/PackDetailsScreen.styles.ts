@@ -1,0 +1,416 @@
+import { StyleSheet } from "react-native"
+import { PRIMARY_APP_COLOR } from "../config"
+
+export const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: "#121212",
+    },
+    header: {
+      height: 60,
+      backgroundColor: "#1e1e1e",
+      paddingHorizontal: 16,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    headerTitle: {
+      color: "white",
+      fontSize: 18,
+      fontWeight: "bold",
+    },
+    content: {
+      flex: 1,
+    },
+    packImageContainer: {
+      alignItems: "center",
+      marginTop: 20,
+    },
+    packImage: {
+      width: 100,
+      height: 100,
+      borderRadius: 50,
+    },
+    packImagePlaceholder: {
+      backgroundColor: PRIMARY_APP_COLOR,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    packImageText: {
+      color: "white",
+      fontSize: 36,
+      fontWeight: "bold",
+    },
+    packDetails: {
+      padding: 20,
+    },
+    packName: {
+      color: "white",
+      fontSize: 24,
+      fontWeight: "bold",
+      textAlign: "center",
+      marginBottom: 8,
+    },
+    packMeta: {
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      marginBottom: 16,
+    },
+    memberCount: {
+      color: "#aaa",
+      fontSize: 14,
+      marginRight: 8,
+    },
+    publicBadge: {
+      backgroundColor: "#2e7d32",
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 4,
+      marginRight: 6,
+    },
+    publicBadgeText: {
+      color: "white",
+      fontSize: 12,
+      fontWeight: "500",
+    },
+    chatBadge: {
+      backgroundColor: "#1976d2",
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 4,
+    },
+    chatBadgeText: {
+      color: "white",
+      fontSize: 12,
+      fontWeight: "500",
+    },
+    description: {
+      color: "#ddd",
+      fontSize: 16,
+      textAlign: "center",
+      marginBottom: 16,
+    },
+    tagsContainer: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      justifyContent: "center",
+    },
+    tagBadge: {
+      backgroundColor: "#333",
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 16,
+      marginRight: 8,
+      marginBottom: 8,
+    },
+    tagText: {
+      color: "#ddd",
+      fontSize: 12,
+    },
+    actionButtons: {
+      flexDirection: "row",
+      justifyContent: "space-around",
+      paddingVertical: 16,
+      borderTopWidth: 1,
+      borderBottomWidth: 1,
+      borderColor: "#333",
+    },
+    actionButton: {
+      alignItems: "center",
+    },
+    actionButtonText: {
+      color: "white",
+      fontSize: 12,
+      marginTop: 4,
+    },
+    routesSection: {
+      padding: 20,
+    },
+    sectionHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 16,
+    },
+    sectionTitle: {
+      color: "white",
+      fontSize: 18,
+      fontWeight: "bold",
+    },
+    addRouteButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: PRIMARY_APP_COLOR,
+      paddingVertical: 6,
+      paddingHorizontal: 10,
+      borderRadius: 16,
+    },
+    addRouteButtonText: {
+      color: "white",
+      fontSize: 12,
+      marginLeft: 4,
+    },
+    routeCard: {
+      backgroundColor: "#2a2a2a",
+      borderRadius: 8,
+      padding: 16,
+      marginBottom: 12,
+    },
+    routeName: {
+      color: "white",
+      fontSize: 16,
+      fontWeight: "bold",
+      marginBottom: 4,
+    },
+    routeDetail: {
+      color: "#ddd",
+      fontSize: 14,
+      marginBottom: 4,
+    },
+    routeDistance: {
+      color: "#aaa",
+      fontSize: 12,
+      textAlign: "right",
+    },
+    emptyRoutes: {
+      alignItems: "center",
+      padding: 20,
+    },
+    emptyRoutesText: {
+      color: "#aaa",
+      fontSize: 16,
+      marginTop: 12,
+      marginBottom: 4,
+    },
+    emptyRoutesSubtext: {
+      color: "#777",
+      fontSize: 14,
+      textAlign: "center",
+    },
+    menuOverlay: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.7)",
+      justifyContent: "flex-end",
+    },
+    menuContainer: {
+      backgroundColor: "#1e1e1e",
+      borderTopLeftRadius: 16,
+      borderTopRightRadius: 16,
+      padding: 20,
+      paddingBottom: 40,
+    },
+    closeButton: {
+      alignSelf: "flex-end",
+      padding: 8,
+      marginBottom: 8,
+    },
+    menuItem: {
+      paddingVertical: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: "#333",
+    },
+    menuText: {
+      color: "white",
+      fontSize: 16,
+    },
+    shareModalContainer: {
+      flex: 1,
+      backgroundColor: "#121212",
+      padding: 20,
+    },
+    shareModalHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 30,
+    },
+    shareModalTitle: {
+      color: "white",
+      fontSize: 18,
+      fontWeight: "bold",
+      textAlign: "center",
+      flex: 1,
+    },
+    closeShareButton: {
+      padding: 8,
+    },
+    qrContainer: {
+      alignItems: "center",
+      justifyContent: "center",
+      marginVertical: 30,
+      backgroundColor: "white",
+      padding: 20,
+      borderRadius: 16,
+      alignSelf: "center",
+    },
+    linkContainer: {
+      marginTop: 20,
+      alignItems: "center",
+    },
+    linkBox: {
+      backgroundColor: "#2a2a2a",
+      borderRadius: 8,
+      padding: 16,
+      width: "100%",
+      marginBottom: 16,
+    },
+    linkText: {
+      color: "white",
+      fontSize: 16,
+    },
+    shareInstructions: {
+      color: "#aaa",
+      textAlign: "center",
+      marginTop: 10,
+      fontSize: 14,
+      lineHeight: 20,
+    },
+    modalContainer: {
+      flex: 1,
+      backgroundColor: "#121212",
+    },
+    modalHeader: {
+      height: 60,
+      backgroundColor: "#1e1e1e",
+      paddingHorizontal: 16,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    modalTitle: {
+      color: "white",
+      fontSize: 18,
+      fontWeight: "bold",
+      textAlign: "center",
+      flex: 1,
+    },
+    closeModalButton: {
+      padding: 8,
+    },
+    searchContainer: {
+      padding: 16,
+    },
+    searchInputContainer: {
+      flexDirection: "row",
+      backgroundColor: "#2a2a2a",
+      borderRadius: 8,
+      alignItems: "center",
+    },
+    searchInput: {
+      flex: 1,
+      color: "#fff",
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      fontSize: 15,
+    },
+    searchButton: {
+      padding: 10,
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    loadingText: {
+      color: "#aaa",
+      marginTop: 10,
+      fontSize: 16,
+    },
+    userItem: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      padding: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: "#333",
+    },
+    userInfo: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    userAvatar: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      marginRight: 12,
+    },
+    userAvatarPlaceholder: {
+      backgroundColor: "#444",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    userAvatarText: {
+      color: "white",
+      fontSize: 16,
+      fontWeight: "bold",
+    },
+    userName: {
+      color: "white",
+      fontSize: 16,
+      fontWeight: "500",
+    },
+    userUsername: {
+      color: "#aaa",
+      fontSize: 14,
+    },
+    inviteButton: {
+      backgroundColor: PRIMARY_APP_COLOR,
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+      borderRadius: 16,
+    },
+    inviteButtonText: {
+      color: "white",
+      fontSize: 14,
+    },
+    emptyResults: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingHorizontal: 32,
+    },
+    emptyResultsText: {
+      color: "white",
+      fontSize: 18,
+      fontWeight: "bold",
+      marginBottom: 8,
+      textAlign: "center",
+    },
+    emptyResultsSubtext: {
+      color: "#aaa",
+      fontSize: 14,
+      textAlign: "center",
+    },
+    routeItem: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      padding: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: "#333",
+    },
+    routeInfo: {
+      flex: 1,
+    },
+    routeItemName: {
+      color: "white",
+      fontSize: 16,
+      fontWeight: "500",
+      marginBottom: 4,
+    },
+    routeItemDetail: {
+      color: "#aaa",
+      fontSize: 14,
+    },
+    addButton: {
+      backgroundColor: PRIMARY_APP_COLOR,
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+      borderRadius: 16,
+    },
+    addButtonText: {
+      color: "white",
+      fontSize: 14,
+    },
+  })

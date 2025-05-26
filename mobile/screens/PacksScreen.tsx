@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useCallback } from "react"
+"use client"
+
+import { useState, useCallback, useEffect } from "react"
 import {
   View,
   Text,
@@ -14,11 +16,12 @@ import {
 } from "react-native"
 import { useNavigation, useFocusEffect } from "@react-navigation/native"
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import { Search, Camera, Plus, Filter } from "lucide-react-native"
+import { Search, Camera, Plus, Filter, X } from "lucide-react-native"
 import { SERVER_URI, PRIMARY_APP_COLOR } from "../config"
 import { styles as globalStyles } from "../styles/RoutesScreen.styles"
 import CreatePackModal from "../components/CreatePackModal"
 import QRCodeScanner from "../components/QRCodeScanner"
+import PackPreviewModal from "../components/PackPreviewModal"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import type { RootStackParamList } from "../types/navigation"
 import type { PackDetails } from "../types/Pack"
@@ -36,13 +39,29 @@ export default function PacksScreen() {
   const [scannerVisible, setScannerVisible] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [filterModalVisible, setFilterModalVisible] = useState(false)
+  const [hasSearched, setHasSearched] = useState(false)
+
+  // Pack preview modal states
+  const [previewModalVisible, setPreviewModalVisible] = useState(false)
+  const [previewPack, setPreviewPack] = useState<PackDetails | null>(null)
+  const [isJoining, setIsJoining] = useState(false)
+  const [isMember, setIsMember] = useState(false)
+
   const [filters, setFilters] = useState({
     tags: [] as string[],
     hasChat: null as boolean | null,
   })
   const [popularTags, setPopularTags] = useState<string[]>([
-    "Cycling", "Mountain Biking", "Road Biking", "Gravel", "Racing", 
-    "Casual", "Training", "Commuting", "Weekend", "Local"
+    "Cycling",
+    "Mountain Biking",
+    "Road Biking",
+    "Gravel",
+    "Racing",
+    "Casual",
+    "Training",
+    "Commuting",
+    "Weekend",
+    "Local",
   ])
 
   useFocusEffect(
@@ -51,11 +70,35 @@ export default function PacksScreen() {
     }, []),
   )
 
+  // Debounced search effect
+  useEffect(() => {
+    if (activeTab !== "find") return
+
+    const timeoutId = setTimeout(() => {
+      handleSearch()
+    }, 300) // 300ms delay
+
+    return () => clearTimeout(timeoutId)
+  }, [searchQuery, filters, activeTab])
+
+  // Reset search when switching tabs
+  useEffect(() => {
+    if (activeTab === "my") {
+      setSearchQuery("")
+      setSearchResults([])
+      setHasSearched(false)
+    }
+  }, [activeTab])
+
   const fetchPacks = async () => {
     try {
       setRefreshing(true)
       const token = await AsyncStorage.getItem("token")
-      if (!token) return Alert.alert("Authentication Error", "Missing token")
+      if (!token) {
+        Alert.alert("Authentication Error", "Missing token")
+        setMyPacks([])
+        return
+      }
 
       const res = await fetch(`${SERVER_URI}/api/packs/user`, {
         headers: {
@@ -68,26 +111,47 @@ export default function PacksScreen() {
 
       if (!res.ok) throw new Error(data.message || "Failed to fetch packs")
 
-      setMyPacks(data)
+      // Ensure data is an array before setting state
+      if (Array.isArray(data)) {
+        setMyPacks(data)
+      } else if (data.message === "no packs") {
+        setMyPacks([])
+      } else {
+        console.error("Expected array but got:", typeof data, data)
+        setMyPacks([])
+      }
     } catch (err: any) {
+      console.error("Error fetching packs:", err)
       Alert.alert("Error Fetching Packs", err.message)
+      setMyPacks([])
     } finally {
       setRefreshing(false)
     }
   }
 
   const handleCreatePack = (newPack: PackDetails) => {
-    setMyPacks((prev) => [...prev, newPack])
+    // Ensure myPacks is an array before spreading
+    setMyPacks((prev) => (Array.isArray(prev) ? [...prev, newPack] : [newPack]))
     setModalVisible(false)
   }
 
   const handleSearch = async () => {
-    if (!searchQuery.trim() && !filters.tags.length && filters.hasChat === null) {
+    // Don't search if we're not on the find tab
+    if (activeTab !== "find") return
+
+    const hasQuery = searchQuery.trim().length > 0
+    const hasFilters = filters.tags.length > 0 || filters.hasChat !== null
+
+    // If no search criteria, clear results and return
+    if (!hasQuery && !hasFilters) {
       setSearchResults([])
+      setHasSearched(false)
+      setIsSearching(false)
       return
     }
 
     setIsSearching(true)
+    setHasSearched(true)
 
     try {
       const token = await AsyncStorage.getItem("token")
@@ -97,17 +161,23 @@ export default function PacksScreen() {
       }
 
       // Build query parameters
-      let queryParams = `q=${encodeURIComponent(searchQuery)}`
-      
-      if (filters.tags.length > 0) {
-        queryParams += `&tags=${encodeURIComponent(filters.tags.join(","))}`
-      }
-      
-      if (filters.hasChat !== null) {
-        queryParams += `&hasChat=${filters.hasChat}`
+      const params = new URLSearchParams()
+
+      if (hasQuery) {
+        params.append("q", searchQuery.trim())
       }
 
-      const res = await fetch(`${SERVER_URI}/api/packs/search?${queryParams}`, {
+      if (filters.tags.length > 0) {
+        params.append("tags", filters.tags.join(","))
+      }
+
+      if (filters.hasChat !== null) {
+        params.append("hasChat", filters.hasChat.toString())
+      }
+
+      console.log("Search URL:", `${SERVER_URI}/api/search/packs?${params.toString()}`)
+
+      const res = await fetch(`${SERVER_URI}/api/search/packs?${params.toString()}`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -115,38 +185,74 @@ export default function PacksScreen() {
       })
 
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || "Search failed")
 
-      setSearchResults(data)
+      if (!res.ok) {
+        throw new Error(data.error || "Search failed")
+      }
+
+      console.log("Search results:", data)
+
+      // Ensure data is an array before setting state
+      if (Array.isArray(data)) {
+        setSearchResults(data)
+      } else {
+        console.error("Expected array but got:", typeof data, data)
+        setSearchResults([])
+      }
     } catch (err: any) {
-      Alert.alert("Search Error", err.message)
+      console.error("Search error:", err)
+      // Only show alert for non-network errors to avoid spam during typing
+      if (!err.message.includes("fetch")) {
+        Alert.alert("Search Error", err.message)
+      }
       setSearchResults([])
     } finally {
       setIsSearching(false)
     }
   }
 
+  const clearSearch = () => {
+    setSearchQuery("")
+    setSearchResults([])
+    setHasSearched(false)
+    setFilters({ tags: [], hasChat: null })
+  }
+
   const handleQRCodeScanned = async (value: string) => {
     setScannerVisible(false)
 
     try {
-      // Extract share code from QR code
-      const shareCodeMatch = value.match(/shareCode=([^&]+)/)
-      if (!shareCodeMatch || !shareCodeMatch[1]) {
-        Alert.alert("Error", "Invalid QR code format")
+      console.log("QR Code scanned:", value)
+
+      // Extract share code from QR code - handle different formats
+      let shareCode = ""
+
+      // Try different patterns
+      const shareCodeMatch = value.match(/shareCode=([^&\s]+)/)
+      const directCodeMatch = value.match(/^[a-f0-9-]{36}$/i) // UUID format
+      const urlMatch = value.match(/\/pack\/([^/\s]+)/)
+
+      if (shareCodeMatch && shareCodeMatch[1]) {
+        shareCode = shareCodeMatch[1]
+      } else if (directCodeMatch) {
+        shareCode = value
+      } else if (urlMatch && urlMatch[1]) {
+        shareCode = urlMatch[1]
+      } else {
+        Alert.alert("Error", "Invalid QR code format. Please scan a valid pack QR code.")
         return
       }
 
-      const shareCode = shareCodeMatch[1]
+      console.log("Extracted share code:", shareCode)
+
       const token = await AsyncStorage.getItem("token")
-      
       if (!token) {
         Alert.alert("Authentication Error", "You need to be logged in to join a pack")
         return
       }
 
-      // First, get the pack details
-      const detailsRes = await fetch(`${SERVER_URI}/api/packs/shared/${shareCode}`, {
+      // Get the pack details using the share code
+      const detailsRes = await fetch(`${SERVER_URI}/api/search/packs/shared/${shareCode}`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -154,49 +260,69 @@ export default function PacksScreen() {
       })
 
       const packData = await detailsRes.json()
-      
+
       if (!detailsRes.ok) {
         throw new Error(packData.error || "Failed to fetch pack details")
       }
 
-      // Show confirmation dialog
-      Alert.alert(
-        "Join Pack",
-        `Would you like to join "${packData.name}"?`,
-        [
-          {
-            text: "Cancel",
-            style: "cancel"
-          },
-          {
-            text: "Join",
-            onPress: async () => {
-              try {
-                const joinRes = await fetch(`${SERVER_URI}/api/packs/${packData.id}/join`, {
-                  method: "POST",
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                  },
-                })
+      console.log("Pack data:", packData)
 
-                const joinData = await joinRes.json()
-                
-                if (!joinRes.ok) {
-                  throw new Error(joinData.error || "Failed to join pack")
-                }
+      // Log the createdAt field to debug
+      console.log("Pack createdAt:", packData.createdAt)
 
-                Alert.alert("Success", "You have joined the pack successfully!")
-                fetchPacks() // Refresh packs list
-              } catch (err: any) {
-                Alert.alert("Error", err.message || "Failed to join pack")
-              }
-            }
-          }
-        ]
-      )
+      // Set the pack data and show preview modal
+      setPreviewPack(packData)
+      setIsMember(packData.isMember || false)
+      setPreviewModalVisible(true)
     } catch (err: any) {
+      console.error("QR Code processing error:", err)
       Alert.alert("Error", err.message || "Failed to process QR code")
+    }
+  }
+
+  const handleJoinPack = async () => {
+    if (!previewPack) return
+
+    setIsJoining(true)
+
+    try {
+      const token = await AsyncStorage.getItem("token")
+      if (!token) {
+        Alert.alert("Authentication Error", "You need to be logged in to join a pack")
+        return
+      }
+
+      console.log("Attempting to join pack with share code:", previewPack.shareCode)
+
+      const joinRes = await fetch(`${SERVER_URI}/api/packs/join/${previewPack.shareCode}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      })
+
+      const joinData = await joinRes.json()
+
+      if (!joinRes.ok) {
+        throw new Error(joinData.error || "Failed to join pack")
+      }
+
+      // Update member status
+      setIsMember(true)
+
+      // Close modal after a short delay to show success state
+      setTimeout(() => {
+        setPreviewModalVisible(false)
+        setPreviewPack(null)
+        Alert.alert("Success", "You have joined the pack successfully!")
+        fetchPacks() // Refresh packs list
+      }, 1500)
+    } catch (err: any) {
+      console.error("Join error:", err)
+      Alert.alert("Error", err.message || "Failed to join pack")
+    } finally {
+      setIsJoining(false)
     }
   }
 
@@ -211,7 +337,9 @@ export default function PacksScreen() {
           <Image source={{ uri: pack.imageUrl }} style={styles.packImage} />
         ) : (
           <View style={[styles.packImage, styles.packImagePlaceholder]}>
-            <Text style={styles.packImagePlaceholderText}>{pack.name.charAt(0).toUpperCase()}</Text>
+            <Text style={styles.packImagePlaceholderText}>
+              {pack.name && pack.name.length > 0 ? pack.name.charAt(0).toUpperCase() : "P"}
+            </Text>
           </View>
         )}
         <View style={styles.packInfo}>
@@ -222,7 +350,7 @@ export default function PacksScreen() {
             {pack.description || "No description"}
           </Text>
           <View style={styles.packMeta}>
-            <Text style={styles.packMembers}>{pack.members.length} members</Text>
+            <Text style={styles.packMembers}>{Array.isArray(pack.members) ? pack.members.length : 0} members</Text>
             {pack.visibility === "public" && (
               <View style={styles.publicBadge}>
                 <Text style={styles.publicBadgeText}>Public</Text>
@@ -234,16 +362,14 @@ export default function PacksScreen() {
               </View>
             )}
           </View>
-          {pack.tags && pack.tags.length > 0 && (
+          {pack.tags && Array.isArray(pack.tags) && pack.tags.length > 0 && (
             <View style={styles.tagsContainer}>
-              {pack.tags.slice(0, 3).map((tag:any, index:any) => (
+              {pack.tags.slice(0, 3).map((tag, index) => (
                 <View key={index} style={styles.tagBadge}>
                   <Text style={styles.tagText}>{tag}</Text>
                 </View>
               ))}
-              {pack.tags.length > 3 && (
-                <Text style={styles.moreTags}>+{pack.tags.length - 3}</Text>
-              )}
+              {pack.tags.length > 3 && <Text style={styles.moreTags}>+{pack.tags.length - 3}</Text>}
             </View>
           )}
         </View>
@@ -252,19 +378,20 @@ export default function PacksScreen() {
   )
 
   const toggleTag = (tag: string) => {
-    setFilters(prev => {
-      const currentTags = [...prev.tags]
+    setFilters((prev) => {
+      // Ensure tags is an array before spreading
+      const currentTags = Array.isArray(prev.tags) ? [...prev.tags] : []
       const tagIndex = currentTags.indexOf(tag)
-      
+
       if (tagIndex >= 0) {
         currentTags.splice(tagIndex, 1)
       } else {
         currentTags.push(tag)
       }
-      
+
       return {
         ...prev,
-        tags: currentTags
+        tags: currentTags,
       }
     })
   }
@@ -279,22 +406,22 @@ export default function PacksScreen() {
       <View style={styles.filterModalOverlay}>
         <View style={styles.filterModalContent}>
           <Text style={styles.filterModalTitle}>Filter Packs</Text>
-          
+
           <Text style={styles.filterSectionTitle}>Tags</Text>
           <View style={styles.tagsGrid}>
-            {popularTags.map(tag => (
+            {popularTags.map((tag) => (
               <TouchableOpacity
                 key={tag}
                 style={[
                   styles.filterTagBadge,
-                  filters.tags.includes(tag) && styles.filterTagBadgeSelected
+                  Array.isArray(filters.tags) && filters.tags.includes(tag) && styles.filterTagBadgeSelected,
                 ]}
                 onPress={() => toggleTag(tag)}
               >
-                <Text 
+                <Text
                   style={[
                     styles.filterTagText,
-                    filters.tags.includes(tag) && styles.filterTagTextSelected
+                    Array.isArray(filters.tags) && filters.tags.includes(tag) && styles.filterTagTextSelected,
                   ]}
                 >
                   {tag}
@@ -302,66 +429,95 @@ export default function PacksScreen() {
               </TouchableOpacity>
             ))}
           </View>
-          
+
           <Text style={styles.filterSectionTitle}>Chat</Text>
           <View style={styles.chatFilterOptions}>
             <TouchableOpacity
-              style={[
-                styles.chatFilterOption,
-                filters.hasChat === null && styles.chatFilterOptionSelected
-              ]}
-              onPress={() => setFilters(prev => ({ ...prev, hasChat: null }))}
+              style={[styles.chatFilterOption, filters.hasChat === null && styles.chatFilterOptionSelected]}
+              onPress={() => setFilters((prev) => ({ ...prev, hasChat: null }))}
             >
               <Text style={styles.chatFilterText}>Any</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[
-                styles.chatFilterOption,
-                filters.hasChat === true && styles.chatFilterOptionSelected
-              ]}
-              onPress={() => setFilters(prev => ({ ...prev, hasChat: true }))}
+              style={[styles.chatFilterOption, filters.hasChat === true && styles.chatFilterOptionSelected]}
+              onPress={() => setFilters((prev) => ({ ...prev, hasChat: true }))}
             >
               <Text style={styles.chatFilterText}>With Chat</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[
-                styles.chatFilterOption,
-                filters.hasChat === false && styles.chatFilterOptionSelected
-              ]}
-              onPress={() => setFilters(prev => ({ ...prev, hasChat: false }))}
+              style={[styles.chatFilterOption, filters.hasChat === false && styles.chatFilterOptionSelected]}
+              onPress={() => setFilters((prev) => ({ ...prev, hasChat: false }))}
             >
               <Text style={styles.chatFilterText}>No Chat</Text>
             </TouchableOpacity>
           </View>
-          
+
           <View style={styles.filterActions}>
-            <TouchableOpacity
-              style={styles.filterClearButton}
-              onPress={() => setFilters({ tags: [], hasChat: null })}
-            >
+            <TouchableOpacity style={styles.filterClearButton} onPress={() => setFilters({ tags: [], hasChat: null })}>
               <Text style={styles.filterClearButtonText}>Clear All</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.filterApplyButton}
               onPress={() => {
                 setFilterModalVisible(false)
-                handleSearch()
               }}
             >
               <Text style={styles.filterApplyButtonText}>Apply Filters</Text>
             </TouchableOpacity>
           </View>
-          
-          <TouchableOpacity
-            style={styles.filterCloseButton}
-            onPress={() => setFilterModalVisible(false)}
-          >
+
+          <TouchableOpacity style={styles.filterCloseButton} onPress={() => setFilterModalVisible(false)}>
             <Text style={styles.filterCloseButtonText}>Cancel</Text>
           </TouchableOpacity>
         </View>
       </View>
     </Modal>
   )
+
+  const renderSearchContent = () => {
+    if (isSearching) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#f3631a" />
+          <Text style={styles.loadingText}>Searching...</Text>
+        </View>
+      )
+    }
+
+    if (hasSearched && Array.isArray(searchResults) && searchResults.length > 0) {
+      return (
+        <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
+          {searchResults.map((pack) => renderPackCard(pack))}
+        </ScrollView>
+      )
+    }
+
+    if (hasSearched && (searchQuery.trim() || filters.tags.length > 0 || filters.hasChat !== null)) {
+      return (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyStateText}>No packs found</Text>
+          <Text style={styles.emptyStateSubtext}>Try different search terms or filters</Text>
+          <TouchableOpacity style={styles.emptyStateButton} onPress={clearSearch}>
+            <X color="white" size={16} />
+            <Text style={styles.emptyStateButtonText}>Clear Search</Text>
+          </TouchableOpacity>
+        </View>
+      )
+    }
+
+    return (
+      <View style={styles.emptyState}>
+        <Text style={styles.emptyStateText}>Find packs to join</Text>
+        <Text style={styles.emptyStateSubtext}>
+          Start typing to search by name, description, or use filters to find packs
+        </Text>
+        <TouchableOpacity style={styles.emptyStateButton} onPress={() => setScannerVisible(true)}>
+          <Camera color="white" size={16} />
+          <Text style={styles.emptyStateButtonText}>Scan QR Code</Text>
+        </TouchableOpacity>
+      </View>
+    )
+  }
 
   return (
     <View style={globalStyles.container}>
@@ -386,30 +542,34 @@ export default function PacksScreen() {
               </TouchableOpacity>
             </View>
 
-            <ScrollView
-              refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={fetchPacks} tintColor={PRIMARY_APP_COLOR} />
-              }
-              contentContainerStyle={{ paddingBottom: 20 }}
-            >
-              {myPacks.length > 0 ? (
-                myPacks.map((pack) => renderPackCard(pack))
-              ) : (
-                <View style={styles.emptyState}>
-                  <Text style={styles.emptyStateText}>You haven't joined any packs yet.</Text>
-                  <Text style={styles.emptyStateSubtext}>
-                    Create a new pack or join an existing one to get started.
-                  </Text>
-                  <TouchableOpacity
-                    style={styles.emptyStateButton}
-                    onPress={() => setModalVisible(true)}
-                  >
-                    <Plus color="white" size={16} />
-                    <Text style={styles.emptyStateButtonText}>Create Pack</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </ScrollView>
+            {refreshing ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#f3631a" />
+                <Text style={styles.loadingText}>Loading packs...</Text>
+              </View>
+            ) : (
+              <ScrollView
+                refreshControl={
+                  <RefreshControl refreshing={refreshing} onRefresh={fetchPacks} tintColor={PRIMARY_APP_COLOR} />
+                }
+                contentContainerStyle={{ paddingBottom: 20 }}
+              >
+                {Array.isArray(myPacks) && myPacks.length > 0 ? (
+                  myPacks.map((pack) => renderPackCard(pack))
+                ) : (
+                  <View style={styles.emptyState}>
+                    <Text style={styles.emptyStateText}>You haven't joined any packs yet.</Text>
+                    <Text style={styles.emptyStateSubtext}>
+                      Create a new pack or join an existing one to get started.
+                    </Text>
+                    <TouchableOpacity style={styles.emptyStateButton} onPress={() => setModalVisible(true)}>
+                      <Plus color="white" size={16} />
+                      <Text style={styles.emptyStateButtonText}>Create Pack</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </ScrollView>
+            )}
           </View>
         ) : (
           <View style={{ flex: 1 }}>
@@ -421,25 +581,32 @@ export default function PacksScreen() {
                   placeholderTextColor="#aaa"
                   value={searchQuery}
                   onChangeText={setSearchQuery}
-                  onSubmitEditing={handleSearch}
                   returnKeyType="search"
+                  autoCorrect={false}
+                  autoCapitalize="none"
                 />
+                {searchQuery.length > 0 && (
+                  <TouchableOpacity style={styles.clearButton} onPress={() => setSearchQuery("")}>
+                    <X color="#aaa" size={16} />
+                  </TouchableOpacity>
+                )}
                 <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
                   <Search color="#fff" size={20} />
                 </TouchableOpacity>
               </View>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[
-                  styles.filterButton, 
-                  (filters.tags.length > 0 || filters.hasChat !== null) && styles.filterButtonActive
-                ]} 
+                  styles.filterButton,
+                  ((Array.isArray(filters.tags) && filters.tags.length > 0) || filters.hasChat !== null) &&
+                    styles.filterButtonActive,
+                ]}
                 onPress={() => setFilterModalVisible(true)}
               >
                 <Filter color="#fff" size={20} />
-                {(filters.tags.length > 0 || filters.hasChat !== null) && (
+                {((Array.isArray(filters.tags) && filters.tags.length > 0) || filters.hasChat !== null) && (
                   <View style={styles.filterBadge}>
                     <Text style={styles.filterBadgeText}>
-                      {filters.tags.length + (filters.hasChat !== null ? 1 : 0)}
+                      {(Array.isArray(filters.tags) ? filters.tags.length : 0) + (filters.hasChat !== null ? 1 : 0)}
                     </Text>
                   </View>
                 )}
@@ -449,37 +616,34 @@ export default function PacksScreen() {
               </TouchableOpacity>
             </View>
 
-            {isSearching ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#f3631a" />
-                <Text style={styles.loadingText}>Searching...</Text>
-              </View>
-            ) : searchResults.length > 0 ? (
-              <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
-                {searchResults.map((pack) => renderPackCard(pack))}
-              </ScrollView>
-            ) : searchQuery || filters.tags.length > 0 || filters.hasChat !== null ? (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyStateText}>No packs found</Text>
-                <Text style={styles.emptyStateSubtext}>
-                  Try different search terms or filters
-                </Text>
-              </View>
-            ) : (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyStateText}>Find packs to join</Text>
-                <Text style={styles.emptyStateSubtext}>
-                  Search by name, description, or scan a QR code to join a pack
-                </Text>
-                <TouchableOpacity
-                  style={styles.emptyStateButton}
-                  onPress={() => setScannerVisible(true)}
-                >
-                  <Camera color="white" size={16} />
-                  <Text style={styles.emptyStateButtonText}>Scan QR Code</Text>
-                </TouchableOpacity>
+            {/* Active filters display */}
+            {(filters.tags.length > 0 || filters.hasChat !== null) && (
+              <View style={styles.activeFiltersContainer}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.activeFiltersScroll}>
+                  {filters.tags.map((tag) => (
+                    <View key={tag} style={styles.activeFilterTag}>
+                      <Text style={styles.activeFilterTagText}>{tag}</Text>
+                      <TouchableOpacity onPress={() => toggleTag(tag)} style={styles.removeFilterButton}>
+                        <X color="white" size={12} />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                  {filters.hasChat !== null && (
+                    <View style={styles.activeFilterTag}>
+                      <Text style={styles.activeFilterTagText}>{filters.hasChat ? "With Chat" : "No Chat"}</Text>
+                      <TouchableOpacity
+                        onPress={() => setFilters((prev) => ({ ...prev, hasChat: null }))}
+                        style={styles.removeFilterButton}
+                      >
+                        <X color="white" size={12} />
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </ScrollView>
               </View>
             )}
+
+            {renderSearchContent()}
           </View>
         )}
       </View>
@@ -492,6 +656,19 @@ export default function PacksScreen() {
           <QRCodeScanner onClose={() => setScannerVisible(false)} onCodeScanned={handleQRCodeScanned} />
         </Modal>
       )}
+
+      {/* Pack Preview Modal */}
+      <PackPreviewModal
+        visible={previewModalVisible}
+        onClose={() => {
+          setPreviewModalVisible(false)
+          setPreviewPack(null)
+        }}
+        pack={previewPack}
+        onJoin={handleJoinPack}
+        isJoining={isJoining}
+        isMember={isMember}
+      />
 
       {/* Filter Modal */}
       {renderFilterModal()}
@@ -621,6 +798,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     fontSize: 15,
   },
+  clearButton: {
+    padding: 8,
+  },
   searchButton: {
     padding: 10,
   },
@@ -654,6 +834,30 @@ const styles = StyleSheet.create({
     backgroundColor: "#2a2a2a",
     padding: 10,
     borderRadius: 8,
+  },
+  activeFiltersContainer: {
+    paddingHorizontal: 16,
+    marginBottom: 12,
+  },
+  activeFiltersScroll: {
+    flexDirection: "row",
+  },
+  activeFilterTag: {
+    backgroundColor: PRIMARY_APP_COLOR,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginRight: 8,
+  },
+  activeFilterTagText: {
+    color: "white",
+    fontSize: 12,
+    marginRight: 4,
+  },
+  removeFilterButton: {
+    padding: 2,
   },
   loadingContainer: {
     flex: 1,

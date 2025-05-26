@@ -61,6 +61,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     // Create JWT token
     const token = generateToken(user.id, email)
 
+
     // Log access
     try {
       await collections.accessLogs.add({
@@ -83,7 +84,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       },
     })
   } catch (error: any) {
-    console.error("Login error:", error)
+    console.error("Login error with email/password:", error)
     res.status(500).json({ message: "Server error" })
   }
 }

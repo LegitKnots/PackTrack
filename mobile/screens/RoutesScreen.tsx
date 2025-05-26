@@ -11,6 +11,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   Modal,
+  RefreshControl,
 } from "react-native"
 import { useNavigation, useFocusEffect } from "@react-navigation/native"
 import AsyncStorage from "@react-native-async-storage/async-storage"
@@ -33,6 +34,7 @@ export default function RoutesScreen() {
   const [searchResults, setSearchResults] = useState<RouteType[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [scannerVisible, setScannerVisible] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
 
   useFocusEffect(
     useCallback(() => {
@@ -69,8 +71,15 @@ export default function RoutesScreen() {
       setMyRoutes(data)
     } catch (err: any) {
       Alert.alert("Error Fetching Routes", err.message)
+    } finally {
+      setRefreshing(false)
     }
   }
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true)
+    fetchRoutes()
+  }, [])
 
   const handleCreateRoute = (newRoute: RouteType) => {
     setMyRoutes((prev) => [...prev, newRoute])
@@ -268,11 +277,24 @@ export default function RoutesScreen() {
               </TouchableOpacity>
             </View>
 
-            <ScrollView>
-              {myRoutes.map((route) => (
-                <View key={route._id || route.id}>{renderRouteCard(route)}</View>
-              ))}
-            </ScrollView>
+            {refreshing ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#f3631a" />
+                <Text style={styles.loadingText}>Loading routes...</Text>
+              </View>
+            ) : (
+              <ScrollView
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#f3631a"]} />}
+              >
+                {myRoutes.length > 0 ? (
+                  myRoutes.map((route) => <View key={route._id || route.id}>{renderRouteCard(route)}</View>)
+                ) : (
+                  <Text style={globalStyles.placeholder}>
+                    You don't have any routes yet. Create one by tapping the + button.
+                  </Text>
+                )}
+              </ScrollView>
+            )}
           </View>
         ) : (
           <View style={{ flex: 1 }}>

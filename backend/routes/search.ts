@@ -1,133 +1,184 @@
-import { Router, Request, Response, NextFunction, RequestHandler } from "express"
-import { collections } from "../config/firebase"
-import auth from "../middleware/auth"
-import type { AuthRequest } from "../types/express.d"
+import express, { RequestHandler, Router } from "express";
+import { collections } from "../config/firebase";
+import auth from "../middleware/auth";
+import type { AuthRequest } from "../types/express.d";
 
-const router = Router()
+const router: Router = express.Router();
 
-// Wrap async handlers and forward errors
-type AsyncFn = (req: AuthRequest, res: Response, next: NextFunction) => Promise<any>
-const asyncHandler = (fn: AsyncFn): RequestHandler => {
-  return (req, res, next) => {
-    Promise.resolve(fn(req as AuthRequest, res, next)).catch(next)
-  }
-}
+// Mount auth middleware for all search routes
+router.use(auth as RequestHandler);
 
-// GET /api/search/packs - Search for packs
-router.get(
-  "/packs",
-  auth as RequestHandler,
-  asyncHandler(async (req, res, next) => {
-    const authReq = req as AuthRequest
-    const q = authReq.query.q as string | undefined
-    const tags = authReq.query.tags as string | undefined
-    const hasChat = authReq.query.hasChat as string | undefined
-
-    if (!authReq.user?.uid) {
-      return res.status(401).json({ error: "Authentication required" })
+/**
+ * GET /api/search/packs - Search for packs
+ */
+const searchPacks: RequestHandler = async (req, res) => {
+  try {
+    const { user } = req as AuthRequest;
+    const uid = user?.uid;
+    if (!uid) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
     }
 
-    const packsSnapshot = await collections.packs.where("visibility", "==", "public").get()
-    let packs = packsSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      name: doc.data().name,
-      description: doc.data().description,
-      tags: doc.data().tags,
-      options: doc.data().options,
-      ...doc.data()
-    }))
+    const q = (req.query.q as string | undefined)?.trim();
+    const tags = (req.query.tags as string | undefined)?.trim();
+    const hasChat = req.query.hasChat as string | undefined;
 
+    console.log("Search params:", { q, tags, hasChat });
+
+    // Fetch public packs and user’s private packs
+    const [publicSnap, userSnap] = await Promise.all([
+      collections.packs.where("visibility", "==", "public").get(),
+      collections.packs.where("members", "array-contains", uid).get(),
+    ]);
+
+    const allMap = new Map<string, any>();
+    publicSnap.docs.forEach(doc => allMap.set(doc.id, { id: doc.id, ...doc.data() }));
+    userSnap.docs.forEach(doc => allMap.set(doc.id, { id: doc.id, ...doc.data() }));
+    let packs = Array.from(allMap.values());
+
+    console.log(`Found ${packs.length} total packs before filtering`);
+
+    // Text search
     if (q) {
-      const searchQuery = q.toLowerCase()
-      packs = packs.filter((pack) => {
-        const name = (pack.name as string)?.toLowerCase() || ""
-        const description = (pack.description as string)?.toLowerCase() || ""
-        return name.includes(searchQuery) || description.includes(searchQuery)
-      })
+      const searchLower = q.toLowerCase();
+      packs = packs.filter(pack => {
+        const name = (pack.name as string)?.toLowerCase() || "";
+        const desc = (pack.description as string)?.toLowerCase() || "";
+        const tagsText = (pack.tags as string[])
+          ? pack.tags.join(" ").toLowerCase()
+          : "";
+        return (
+          name.includes(searchLower) ||
+          desc.includes(searchLower) ||
+          tagsText.includes(searchLower)
+        );
+      });
+      console.log(`After text search: ${packs.length} packs`);
     }
 
+    // Filter by tags
     if (tags) {
-      const tagList = tags.split(",")
-      packs = packs.filter((pack) =>
-        (pack.tags as string[] | undefined)?.some((tag) => tagList.includes(tag))
-      )
+      const tagList = tags.split(",").map(t => t.toLowerCase());
+      packs = packs.filter(pack => {
+        if (!Array.isArray(pack.tags)) return false;
+        return (pack.tags as string[]).some(tag =>
+          tagList.some(filterTag => tag.toLowerCase().includes(filterTag))
+        );
+      });
+      console.log(`After tag filter: ${packs.length} packs`);
     }
 
+    // Filter by chat option
     if (hasChat !== undefined) {
-      const chatEnabled = hasChat === "true"
-      packs = packs.filter((pack) => pack.options?.hasChat === chatEnabled)
+      const enabled = hasChat === "true";
+      packs = packs.filter(pack => pack.options?.hasChat === enabled);
+      console.log(`After chat filter: ${packs.length} packs`);
     }
 
-    res.status(200).json(packs)
-  })
-)
+    // Sort: member packs first, then by updatedAt descending
+    packs.sort((a, b) => {
+      const aMember = (a.members as string[]).includes(uid) ? 1 : 0;
+      const bMember = (b.members as string[]).includes(uid) ? 1 : 0;
+      if (aMember !== bMember) return bMember - aMember;
 
-// GET /api/search/users - Search for users
-router.get(
-  "/users",
-  auth as RequestHandler,
-  asyncHandler(async (req, res, next) => {
-    const authReq = req as AuthRequest
-    const q = authReq.query.q as string | undefined
+      const aTime = (a.updatedAt as any)?.toMillis?.() || 0;
+      const bTime = (b.updatedAt as any)?.toMillis?.() || 0;
+      return bTime - aTime;
+    });
 
-    if (!authReq.user?.uid) {
-      return res.status(401).json({ error: "Authentication required" })
+    console.log(`Returning ${packs.length} packs`);
+    res.status(200).json(packs);
+  } catch (err) {
+    console.error("Error searching packs:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+/**
+ * GET /api/search/users - Search for users
+ */
+const searchUsers: RequestHandler = async (req, res) => {
+  try {
+    const { user } = req as AuthRequest;
+    const uid = user?.uid;
+    if (!uid) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
     }
 
+    const q = (req.query.q as string | undefined)?.trim();
     if (!q) {
-      return res.status(400).json({ error: "Search query is required" })
+      res.status(400).json({ error: "Search query is required" });
+      return;
     }
 
-    const searchQuery = q.toLowerCase()
-    const usersSnapshot = await collections.users.limit(50).get()
-    const users: Array<{ id: string; fullname: string; username: string; profileImage?: string }> = []
+    const searchLower = q.toLowerCase();
 
-    usersSnapshot.forEach((doc) => {
-      const data = doc.data()
-      const fullname = (data.fullname as string)?.toLowerCase() || ""
-      const username = (data.username as string)?.toLowerCase() || ""
+    const usersSnap = await collections.users.limit(50).get();
+    const results: Array<{ id: string; fullname?: string; username?: string; profileImage?: string }> = [];
 
-      if (fullname.includes(searchQuery) || username.includes(searchQuery)) {
-        users.push({
+    usersSnap.docs.forEach(doc => {
+      const data = doc.data();
+      const full = (data.fullname as string)?.toLowerCase() || "";
+      const uname = (data.username as string)?.toLowerCase() || "";
+      if (full.includes(searchLower) || uname.includes(searchLower)) {
+        results.push({
           id: doc.id,
-          fullname: data.fullname as string,
-          username: data.username as string,
-          profileImage: data.profileImage as string,
-        })
+          fullname: data.fullname,
+          username: data.username,
+          profileImage: data.profileImage,
+        });
       }
-    })
+    });
 
-    res.status(200).json(users)
-  })
-)
+    res.status(200).json(results);
+  } catch (err) {
+    console.error("Error searching users:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
 
-// GET /api/search/packs/shared/:shareCode - Get a pack by share code
-router.get(
-  "/packs/shared/:shareCode",
-  auth as RequestHandler,
-  asyncHandler(async (req, res, next) => {
-    const authReq = req as AuthRequest
-    const { shareCode } = authReq.params
-
-    if (!authReq.user?.uid) {
-      return res.status(401).json({ error: "Authentication required" })
+/**
+ * GET /api/search/packs/shared/:shareCode - Get a pack by share code
+ */
+const getSharedPack: RequestHandler = async (req, res) => {
+  try {
+    const { user } = req as AuthRequest;
+    const uid = user?.uid;
+    if (!uid) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
     }
 
+    const { shareCode } = req.params;
     if (!shareCode) {
-      return res.status(400).json({ error: "Share code is required" })
+      res.status(400).json({ error: "Share code is required" });
+      return;
     }
 
-    const snapshot = await collections.packs.where("shareCode", "==", shareCode).limit(1).get()
-    if (snapshot.empty) {
-      return res.status(404).json({ error: "Pack not found" })
+    console.log("Looking for pack with share code:", shareCode);
+    const snap = await collections.packs.where("shareCode", "==", shareCode).limit(1).get();
+    if (snap.empty) {
+      console.log("No pack found with share code:", shareCode);
+      res.status(404).json({ error: "Pack not found" });
+      return;
     }
 
-    const doc = snapshot.docs[0]
-    const data = doc.data()
-    const isMember = (data.members as string[]).includes(authReq.user.uid)
+    const doc = snap.docs[0];
+    const data = doc.data();
+    const isMember = Array.isArray(data.members) ? (data.members as string[]).includes(uid) : false;
 
-    res.status(200).json({ id: doc.id, ...data, isMember })
-  })
-)
+    res.status(200).json({ id: doc.id, ...data, isMember });
+  } catch (err) {
+    console.error("Error fetching shared pack:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
 
-export default router
+// Mount routes
+router.get("/packs", searchPacks);
+router.get("/users", searchUsers);
+router.get("/packs/shared/:shareCode", getSharedPack);
+
+export default router;

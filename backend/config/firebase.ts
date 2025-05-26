@@ -1,71 +1,48 @@
 import admin from "firebase-admin"
 import { getFirestore } from "firebase-admin/firestore"
 import { getStorage } from "firebase-admin/storage"
-import fs from "fs"
 import path from "path"
 
-// Initialize Firebase Admin SDK
-let serviceAccount
+// Load service account JSON from file or environment
+const serviceAccount = require(path.resolve(__dirname, "../serviceAccountKey.json"))
+console.log("Loaded service account for project:", serviceAccount.project_id);
 
-// Try to load service account from file first
-try {
-  const serviceAccountPath = path.resolve(__dirname, "../serviceAccountKey.json")
-  if (fs.existsSync(serviceAccountPath)) {
-    serviceAccount = require(serviceAccountPath)
-  }
-} catch (error) {
-  console.warn("Could not load service account from file:", error)
+
+// Validate
+if (!serviceAccount) {
+  throw new Error("Invalid Firebase service account. Make sure serviceAccountKey.json exists.")
 }
 
-// If no service account from file, try environment variables
-if (!serviceAccount && process.env.FIREBASE_SERVICE_ACCOUNT) {
-  try {
-    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
-  } catch (error) {
-    console.error("Error parsing FIREBASE_SERVICE_ACCOUNT env variable:", error)
-  }
-}
+// Initialize Admin SDK
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+})
 
-// Validate service account has required fields
-if (!serviceAccount || !serviceAccount.project_id) {
-  console.error("Service account is missing required fields. Check your configuration.")
-  // Provide a fallback for development if needed
-  if (process.env.NODE_ENV === "development") {
-    console.warn("Using fallback configuration for development")
-    serviceAccount = {
-      project_id: process.env.FIREBASE_PROJECT_ID || "packtrack-dev",
-      client_email: process.env.FIREBASE_CLIENT_EMAIL || "firebase-adminsdk@packtrack-dev.iam.gserviceaccount.com",
-      private_key: (process.env.FIREBASE_PRIVATE_KEY || "").replace(/\\n/g, "\n"),
-    }
-  }
-}
+console.log("Firestore initialized with apps:", admin.apps.length);
 
-// Initialize Firebase Admin SDK
-if (!admin.apps.length) {
-  try {
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-      storageBucket: process.env.FIREBASE_STORAGE_BUCKET || `${serviceAccount.project_id}.appspot.com`,
-    })
-    console.log("Firebase Admin SDK initialized successfully")
-  } catch (error) {
-    console.error("Firebase initialization error:", error)
-    throw error
-  }
-}
-
-const db = getFirestore()
-const auth = admin.auth()
-const storage = getStorage().bucket()
-
-// Collection references
-const collections = {
+export const db = getFirestore()
+export const auth = admin.auth()
+export const storage = getStorage().bucket()
+export const collections = {
   users: db.collection("users"),
   routes: db.collection("routes"),
   packs: db.collection("packs"),
   rides: db.collection("rides"),
   invitations: db.collection("invitations"),
   accessLogs: db.collection("accessLogs"),
+  notifications: db.collection("notifications"),
 }
 
-export { db, auth, storage, collections }
+
+;(async () => {
+  try {
+    const { users: userList } = await admin.auth().listUsers(10);
+    console.log(
+      "Admin SDK can list users:",
+      userList.map(u => u.uid)
+    );
+  } catch (err) {
+    console.error("Failed to list users:", err);
+  }
+})();

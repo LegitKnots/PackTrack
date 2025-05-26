@@ -7,7 +7,6 @@ import { useEffect } from "react"
 import { Platform } from "react-native"
 import { NavigationContainer } from "@react-navigation/native"
 import { createNativeStackNavigator } from "@react-navigation/native-stack"
-import type { RootStackParamList } from "./types/navigation"
 import changeNavigationBarColor from "react-native-navigation-bar-color"
 import { SafeAreaProvider } from "react-native-safe-area-context"
 import "react-native-get-random-values"
@@ -26,6 +25,8 @@ import PackSettingsScreen from "./screens/PackSettingsScreen"
 import PackChatScreen from "./screens/PackChatScreen"
 
 import { GestureHandlerRootView } from "react-native-gesture-handler"
+import { AuthProvider } from "./context/AuthContext"
+import type { RootStackParamList } from "./types/navigation"
 
 const Stack = createNativeStackNavigator<RootStackParamList>()
 
@@ -39,22 +40,24 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <NavigationContainer>
-          <Stack.Navigator initialRouteName="Landing" screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="Landing" component={Landing} />
-            <Stack.Screen name="Login" component={Login} />
-            <Stack.Screen name="Signup" component={Signup} />
-            <Stack.Screen name="HomeNavigation" component={HomeNavigation} />
-            <Stack.Screen name="CompleteProfile" component={CompleteProfileScreen} />
-            <Stack.Screen name="Drive" component={DrivingDirectionsScreen} />
-            <Stack.Screen name="RouteDetails" component={RouteDetailsScreen} />
-            <Stack.Screen name="EditRoute" component={EditRoute} />
-            <Stack.Screen name="PackDetails" component={PackDetailsScreen} />
-            <Stack.Screen name="PackMembers" component={PackMembersScreen} />
-            <Stack.Screen name="PackSettings" component={PackSettingsScreen} />
-            <Stack.Screen name="PackChat" component={PackChatScreen} />
-          </Stack.Navigator>
-        </NavigationContainer>
+        <AuthProvider>
+          <NavigationContainer>
+            <Stack.Navigator initialRouteName="Landing" screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="Landing" component={Landing} />
+              <Stack.Screen name="Login" component={Login} />
+              <Stack.Screen name="Signup" component={Signup} />
+              <Stack.Screen name="HomeNavigation" component={HomeNavigation} />
+              <Stack.Screen name="CompleteProfile" component={CompleteProfileScreen} />
+              <Stack.Screen name="Drive" component={DrivingDirectionsScreen} />
+              <Stack.Screen name="RouteDetails" component={RouteDetailsScreen} />
+              <Stack.Screen name="EditRoute" component={EditRoute} />
+              <Stack.Screen name="PackDetails" component={PackDetailsScreen} />
+              <Stack.Screen name="PackMembers" component={PackMembersScreen} />
+              <Stack.Screen name="PackSettings" component={PackSettingsScreen} />
+              <Stack.Screen name="PackChat" component={PackChatScreen} />
+            </Stack.Navigator>
+          </NavigationContainer>
+        </AuthProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   )

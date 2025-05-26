@@ -15,6 +15,16 @@ export interface User {
   profilePicUrl?: string
   createdAt: Timestamp
   updatedAt: Timestamp
+  notifications?: Notifications[]
+}
+export interface Notifications {
+  id: string
+  userId: string
+  type: string
+  title: string
+  data: string
+  read: boolean
+  createdAt: Timestamp
 }
 
 export interface Route {
@@ -41,23 +51,32 @@ export interface Waypoint {
   order: number
 }
 
-export interface Pack {
+export interface PackDetails {
   id: string
   name: string
-  description?: string
-  createdBy: string // User ID
-  members: string[] // Array of user IDs
-  admins?: string[] // Array of user IDs
-  routes: string[] // Array of route IDs
-  chatEnabled: boolean
-  imageURI?: string
-  tags?: PackTag[]
-  createdAt: Timestamp
-  updatedAt: Timestamp
+  description: string
+  owner: string // user ID
+  admins: string[] // user IDs
+  members: string[] // user IDs
+  createdBy: string // user ID
+  createdDate: Timestamp
+  imageURI: string
+  visibility: string
+  tags: PackTag[]
+  routes: PackRoutes[]
+  options: PackOptions
 }
 
 export interface PackTag {
   tagName: string
+}
+
+export interface PackRoutes {
+  routeID: string
+}
+
+export interface PackOptions {
+  chatEnabled: boolean
 }
 
 export interface Location {

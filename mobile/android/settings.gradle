@@ -53,3 +53,9 @@ dependencyResolutionManagement {
 rootProject.name = 'mobile'
 include ':app'
 includeBuild('../node_modules/@react-native/gradle-plugin')
+
+include ':react-native-keyboard-controller'
+project(':react-native-keyboard-controller').projectDir = new File(
+    rootProject.projectDir,
+    '../node_modules/react-native-keyboard-controller/android'
+)

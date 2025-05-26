@@ -1,4 +1,4 @@
-import { Router, Request, Response, NextFunction, RequestHandler } from "express"
+import { Router, type Request, type Response, type NextFunction, type RequestHandler } from "express"
 import { v4 as uuidv4 } from "uuid"
 import multer from "multer"
 import { collections, storage } from "../config/firebase"
@@ -27,7 +27,7 @@ const asyncHandler = (fn: AsyncHandler): RequestHandler => {
 
 // GET /api/packs - Get all packs for the current user
 router.get(
-  "/",
+  "/user",
   auth as RequestHandler,
   asyncHandler(async (req, res) => {
     const authReq = req as AuthRequest
@@ -35,13 +35,23 @@ router.get(
       return res.status(401).json({ error: "Authentication required" })
     }
 
+    // fetch packs where the user is a member
     const packsSnapshot = await collections.packs
       .where("members", "array-contains", authReq.user.uid)
       .orderBy("updatedAt", "desc")
       .get()
 
-    const packs = packsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
-    res.status(200).json(packs)
+    // if no docs, respond with “no packs”
+    if (packsSnapshot.empty) {
+      return res.status(200).json({ message: "no packs" })
+    }
+
+    // otherwise map and return
+    const packs = packsSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }))
+    return res.status(200).json(packs)
   }),
 )
 
@@ -99,12 +109,20 @@ router.post(
     const shareCode = uuidv4()
     let parsedOptions: any = options
     if (typeof options === "string") {
-      try { parsedOptions = JSON.parse(options) } catch { parsedOptions = { hasChat: false } }
+      try {
+        parsedOptions = JSON.parse(options)
+      } catch {
+        parsedOptions = { hasChat: false }
+      }
     }
 
     let parsedTags: any[] = tags
     if (typeof tags === "string") {
-      try { parsedTags = JSON.parse(tags) } catch { parsedTags = [] }
+      try {
+        parsedTags = JSON.parse(tags)
+      } catch {
+        parsedTags = []
+      }
     }
 
     const newPack = {
@@ -165,12 +183,20 @@ router.patch(
 
     let parsedOptions: any = options
     if (typeof options === "string") {
-      try { parsedOptions = JSON.parse(options) } catch { parsedOptions = packData?.options || { hasChat: false } }
+      try {
+        parsedOptions = JSON.parse(options)
+      } catch {
+        parsedOptions = packData?.options || { hasChat: false }
+      }
     }
 
     let parsedTags: any[] = tags
     if (typeof tags === "string") {
-      try { parsedTags = JSON.parse(tags) } catch { parsedTags = packData?.tags || [] }
+      try {
+        parsedTags = JSON.parse(tags)
+      } catch {
+        parsedTags = packData?.tags || []
+      }
     }
 
     const updateData: Record<string, any> = { updatedAt: Timestamp.now() }
@@ -296,6 +322,175 @@ router.post(
     })
 
     res.status(200).json({ message: "Successfully left the pack" })
+  }),
+)
+
+// GET /api/packs/:id/routes - Get all routes for a specific pack
+router.get(
+  "/:id/routes",
+  auth as RequestHandler,
+  asyncHandler(async (req, res) => {
+    const authReq = req as AuthRequest
+    const { id } = req.params
+
+    if (!authReq.user?.uid) {
+      return res.status(401).json({ error: "Authentication required" })
+    }
+
+    // First check if the pack exists and user has access
+    const packDoc = await collections.packs.doc(id).get()
+    if (!packDoc.exists) {
+      return res.status(404).json({ error: "Pack not found" })
+    }
+
+    const packData = packDoc.data()
+    // Check if user is a member or if the pack is public
+    if (!packData?.members.includes(authReq.user.uid) && packData?.visibility !== "public") {
+      return res.status(403).json({ error: "You don't have access to this pack" })
+    }
+
+    // Get all routes associated with this pack
+    const routesSnapshot = await collections.routes.where("packId", "==", id).orderBy("updatedAt", "desc").get()
+
+    if (routesSnapshot.empty) {
+      return res.status(200).json([])
+    }
+
+    // Map the routes data
+    const routes = routesSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }))
+
+    return res.status(200).json(routes)
+  }),
+)
+
+// GET /api/packs/:id/members - Get all members of a specific pack
+router.get(
+  "/:id/members",
+  auth as RequestHandler,
+  asyncHandler(async (req, res) => {
+    const authReq = req as AuthRequest
+    const { id } = req.params
+
+    if (!authReq.user?.uid) {
+      return res.status(401).json({ error: "Authentication required" })
+    }
+
+    // First check if the pack exists and user has access
+    const packDoc = await collections.packs.doc(id).get()
+    if (!packDoc.exists) {
+      return res.status(404).json({ error: "Pack not found" })
+    }
+
+    const packData = packDoc.data()
+    // Check if user is a member or if the pack is public
+    if (!packData?.members.includes(authReq.user.uid) && packData?.visibility !== "public") {
+      return res.status(403).json({ error: "You don't have access to this pack" })
+    }
+
+    // Get user details for each member
+    const memberPromises = packData.members.map(async (memberId: string) => {
+      try {
+        const userDoc = await collections.users.doc(memberId).get()
+        if (!userDoc.exists) return null
+
+        const userData = userDoc.data()
+        return {
+          id: memberId,
+          fullname: userData?.fullname || "Unknown User",
+          username: userData?.username || "unknown",
+          profileImage: userData?.profileImage || null,
+          isOwner: memberId === packData.owner,
+        }
+      } catch (error) {
+        console.error(`Error fetching user ${memberId}:`, error)
+        return null
+      }
+    })
+
+    const members = (await Promise.all(memberPromises)).filter((member) => member !== null)
+
+    return res.status(200).json(members)
+  }),
+)
+
+// POST /api/packs/join/:shareCode - Join a pack using share code
+router.post(
+  "/join/:shareCode",
+  auth as RequestHandler,
+  asyncHandler(async (req, res) => {
+    const authReq = req as AuthRequest
+    const { shareCode } = req.params
+
+    if (!authReq.user?.uid) {
+      return res.status(401).json({ error: "Authentication required" })
+    }
+
+    if (!shareCode) {
+      return res.status(400).json({ error: "Share code is required" })
+    }
+
+    // Find pack by share code
+    const packsSnapshot = await collections.packs.where("shareCode", "==", shareCode).limit(1).get()
+
+    if (packsSnapshot.empty) {
+      return res.status(404).json({ error: "Invalid share code" })
+    }
+
+    const packDoc = packsSnapshot.docs[0]
+    const packData = packDoc.data()
+
+    // Check if user is already a member
+    if (packData?.members.includes(authReq.user.uid)) {
+      return res.status(400).json({ error: "You are already a member of this pack" })
+    }
+
+    // For private packs, verify share code access
+    if (packData?.visibility === "private") {
+      // Additional validation could be added here if needed
+      // For now, having the share code is sufficient for private packs
+    }
+
+    // Add user to pack members
+    await collections.packs.doc(packDoc.id).update({
+      members: admin.firestore.FieldValue.arrayUnion(authReq.user.uid),
+      updatedAt: Timestamp.now(),
+    })
+
+    // Create notification for pack owner
+    try {
+      const userDoc = await collections.users.doc(authReq.user.uid).get()
+      const userData = userDoc.data()
+      const userName = userData?.fullname || userData?.username || "A user"
+
+      await collections.notifications.add({
+        userId: packData.owner,
+        type: "pack_update",
+        title: "New Pack Member",
+        message: `${userName} has joined ${packData.name}`,
+        data: {
+          packId: packDoc.id,
+          newMemberId: authReq.user.uid,
+        },
+        read: false,
+        createdAt: Timestamp.now(),
+      })
+    } catch (error) {
+      console.error("Error creating notification:", error)
+      // Don't fail the join operation if notification fails
+    }
+
+    return res.status(200).json({
+      message: "Successfully joined the pack",
+      pack: {
+        id: packDoc.id,
+        name: packData.name,
+        description: packData.description,
+        imageUrl: packData.imageUrl,
+      },
+    })
   }),
 )
 
