@@ -7,6 +7,7 @@ export type RootStackParamList = {
   Login: undefined
   Signup: undefined
   HomeNavigation: undefined
+  Dashboard: undefined
   CompleteProfile: { userId: string; token: string }
   Packs: undefined
   Routes: undefined
@@ -18,6 +19,13 @@ export type RootStackParamList = {
   PackSettings: { pack: PackDetails }
   PackChat: { packId: string }
   Notifications: undefined
+  Settings: undefined
+  AccountSettings: undefined
+  AppearanceSettings: undefined
+  PersonalizationSettings: undefined
+  PrivacySettings: undefined
+  NotificationSettings: undefined
+  EditProfile: undefined
 }
 
 export type RouteType = {
@@ -35,8 +43,8 @@ export type RouteType = {
   createdBy: string
   collaborators?: string[]
   visibility?: "private" | "public"
-  isShared: boolean,
-  shareCode: string,
+  isShared: boolean
+  shareCode: string
 }
 
 // Navigation prop types

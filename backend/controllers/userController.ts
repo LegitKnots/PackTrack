@@ -7,6 +7,7 @@ import { Timestamp } from "firebase-admin/firestore"
 export const updateProfile = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { userId } = req.params
+    console.log(req.body)
     const { username, bio, bike, location } = req.body
 
     // Verify user is updating their own profile
@@ -107,6 +108,7 @@ export const getUserProfile = async (req: AuthRequest, res: Response): Promise<v
         bio: user.bio,
         bike: user.bike,
         location: user.location,
+        profilePicUrl: user.profilePicUrl || ''
       },
     })
   } catch (error: any) {

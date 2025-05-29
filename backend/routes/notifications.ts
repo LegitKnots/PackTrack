@@ -58,6 +58,7 @@ router.get(
         (doc) =>
           ({
             id: doc.id,
+            data: doc.data().message,
             ...doc.data(),
           }) as Notifications,
       )
@@ -291,7 +292,7 @@ router.post(
   asyncHandler(async (req, res) => {
     try {
       const { userId } = req.params
-      const { type, title, data, read = false } = req.body
+      const { type, title, data, message, read = false } = req.body
 
       // Basic validation
       if (!type || !title) {
@@ -304,6 +305,7 @@ router.post(
         type,
         title,
         data: data || "",
+        message: message || "",
         read,
         createdAt: Timestamp.now(),
       }

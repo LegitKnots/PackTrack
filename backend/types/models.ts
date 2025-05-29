@@ -24,6 +24,7 @@ export interface Notifications {
   type: string
   title: string
   data: string
+  message: string,
   read: boolean
   createdAt: Timestamp
   updatedAt?: Timestamp

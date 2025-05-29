@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { View, Text, Dimensions, ActivityIndicator, TouchableOpacity, Image, Alert } from "react-native"
+import { View, Text, Dimensions, ActivityIndicator, TouchableOpacity, Image, ScrollView } from "react-native"
 import { launchImageLibrary, type ImagePickerResponse, type MediaType } from "react-native-image-picker"
 import { styles } from "../styles/ProfileScreen.styles"
 import AsyncStorage from "@react-native-async-storage/async-storage"
@@ -12,12 +12,75 @@ import MaterialIcons from "react-native-vector-icons/MaterialIcons"
 
 const { width } = Dimensions.get("window")
 
+interface CustomModalProps {
+  visible: boolean
+  title: string
+  message: string
+  buttons: Array<{
+    text: string
+    onPress: () => void
+    style?: "default" | "cancel" | "destructive"
+  }>
+  onClose: () => void
+}
+
+const CustomModal = ({ visible, title, message, buttons, onClose }: CustomModalProps) => {
+  if (!visible) return null
+
+  return (
+    <View style={styles.modalOverlay}>
+      <View style={styles.modalContainer}>
+        <Text style={styles.modalTitle}>{title}</Text>
+        <Text style={styles.modalMessage}>{message}</Text>
+        <View style={styles.modalButtons}>
+          {buttons.map((button, index) => (
+            <TouchableOpacity
+              key={index}
+              style={[
+                styles.modalButton,
+                button.style === "cancel" && styles.modalButtonCancel,
+                button.style === "destructive" && styles.modalButtonDestructive,
+              ]}
+              onPress={button.onPress}
+            >
+              <Text
+                style={[
+                  styles.modalButtonText,
+                  button.style === "cancel" && styles.modalButtonTextCancel,
+                  button.style === "destructive" && styles.modalButtonTextDestructive,
+                ]}
+              >
+                {button.text}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+    </View>
+  )
+}
+
 export default function ProfileScreen() {
   const navigation = useNavigation()
   const [userData, setUserData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState("")
+  const [showModal, setShowModal] = useState(false)
+  const [modalConfig, setModalConfig] = useState({
+    title: "",
+    message: "",
+    buttons: [] as Array<{
+      text: string
+      onPress: () => void
+      style?: "default" | "cancel" | "destructive"
+    }>,
+  })
+
+  const showCustomModal = (title: string, message: string, buttons: typeof modalConfig.buttons) => {
+    setModalConfig({ title, message, buttons })
+    setShowModal(true)
+  }
 
   const fetchProfile = async () => {
     try {
@@ -76,7 +139,7 @@ export default function ProfileScreen() {
           const userId = await AsyncStorage.getItem("userId")
 
           if (!token || !userId) {
-            Alert.alert("Error", "You are not logged in.")
+            showCustomModal("Error", "You are not logged in.", [{ text: "OK", onPress: () => setShowModal(false) }])
             return
           }
 
@@ -102,16 +165,17 @@ export default function ProfileScreen() {
             throw new Error(uploadData.message || "Upload failed")
           }
 
-          // Update local state with new profile picture
           setUserData((prev: any) => ({
             ...prev,
             profilePicUrl: uploadData.profilePicUrl,
           }))
 
-          Alert.alert("Success", "Profile picture updated!")
+          showCustomModal("Success", "Profile picture updated!", [{ text: "OK", onPress: () => setShowModal(false) }])
         } catch (error: any) {
           console.error("Profile picture upload error:", error)
-          Alert.alert("Upload Error", error.message || "Failed to upload profile picture")
+          showCustomModal("Upload Error", error.message || "Failed to upload profile picture", [
+            { text: "OK", onPress: () => setShowModal(false) },
+          ])
         } finally {
           setUploading(false)
         }
@@ -139,48 +203,97 @@ export default function ProfileScreen() {
     )
   }
 
-  const profileImageUri = userData.profilePicUrl ? `${SERVER_URI}${userData.profilePicUrl}` : null
+  const profileImageUri = userData.profilePicUrl || null
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.headerSection}>
-        <View style={styles.avatarContainer}>
-          {profileImageUri ? (
-            <Image source={{ uri: profileImageUri }} style={styles.avatar} />
-          ) : (
-            <View style={styles.avatarPlaceholder}>
-              <Text style={styles.avatarText}>
-                {userData.username ? userData.username.charAt(0).toUpperCase() : "U"}
-              </Text>
-            </View>
-          )}
-          <TouchableOpacity style={styles.editAvatarButton} onPress={updateProfilePicture} disabled={uploading}>
-            {uploading ? (
-              <ActivityIndicator size="small" color="#fff" />
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={styles.headerSection}>
+          <View style={styles.avatarContainer}>
+            {profileImageUri ? (
+              <Image source={{ uri: profileImageUri }} style={styles.avatar} />
             ) : (
-              <MaterialIcons name="edit" size={16} color="#fff" />
+              <View style={styles.avatarPlaceholder}>
+                <Text style={styles.avatarText}>
+                  {userData.username ? userData.username.charAt(0).toUpperCase() : "U"}
+                </Text>
+              </View>
             )}
-          </TouchableOpacity>
+          </View>
+
+          <Text style={styles.username}>@{userData.username || "User"}</Text>
+          <Text style={styles.bio}>{userData.bio || "No bio yet."}</Text>
+
+          <View style={styles.buttonRow}>
+            <TouchableOpacity style={styles.editBtn} onPress={() => navigation.navigate("EditProfile" as never)}>
+              <MaterialIcons name="edit" size={16} color="#fff" />
+              <Text style={styles.editText}>Edit Profile</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.settingsBtn} onPress={() => navigation.navigate("Settings" as never)}>
+              <MaterialIcons name="settings" size={16} color="#f3631a" />
+              <Text style={styles.settingsText}>Settings</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        <Text style={styles.username}>@{userData.username || "User"}</Text>
-        <Text style={styles.bio}>{userData.bio || "No bio yet."}</Text>
-        <TouchableOpacity style={styles.editBtn} onPress={() => navigation.navigate("CompleteProfile" as never)}>
-          <Text style={styles.editText}>Edit Profile</Text>
-        </TouchableOpacity>
-      </View>
+        <View style={styles.infoSection}>
+          <View style={styles.infoCard}>
+            <MaterialIcons name="person" size={20} color="#f3631a" />
+            <Text style={styles.infoItem}>
+              <Text style={styles.label}>Name:</Text> {userData.fullname}
+            </Text>
+          </View>
 
-      <View style={styles.infoSection}>
-        <Text style={styles.infoItem}>
-          <Text style={styles.label}>Name:</Text> {userData.fullname}
-        </Text>
-        <Text style={styles.infoItem}>
-          <Text style={styles.label}>Bike:</Text> {userData.bike || "N/A"}
-        </Text>
-        <Text style={styles.infoItem}>
-          <Text style={styles.label}>Location:</Text> {userData.location || "N/A"}
-        </Text>
-      </View>
+          <View style={styles.infoCard}>
+            <MaterialIcons name="motorcycle" size={20} color="#f3631a" />
+            <Text style={styles.infoItem}>
+              <Text style={styles.label}>Bike:</Text> {userData.bike || "N/A"}
+            </Text>
+          </View>
+
+          <View style={styles.infoCard}>
+            <MaterialIcons name="location-on" size={20} color="#f3631a" />
+            <Text style={styles.infoItem}>
+              <Text style={styles.label}>Location:</Text> {userData.location || "N/A"}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.statsSection}>
+          <Text style={styles.statsSectionTitle}>Statistics</Text>
+          <View style={styles.statsGrid}>
+            <View style={styles.statCard}>
+              <MaterialIcons name="group" size={24} color="#f3631a" />
+              <Text style={styles.statNumber}>12</Text>
+              <Text style={styles.statLabel}>Packs Joined</Text>
+            </View>
+            <View style={styles.statCard}>
+              <MaterialIcons name="route" size={24} color="#f3631a" />
+              <Text style={styles.statNumber}>847</Text>
+              <Text style={styles.statLabel}>Miles Ridden</Text>
+            </View>
+            <View style={styles.statCard}>
+              <MaterialIcons name="emoji-events" size={24} color="#f3631a" />
+              <Text style={styles.statNumber}>23</Text>
+              <Text style={styles.statLabel}>Achievements</Text>
+            </View>
+            <View style={styles.statCard}>
+              <MaterialIcons name="star" size={24} color="#f3631a" />
+              <Text style={styles.statNumber}>4.8</Text>
+              <Text style={styles.statLabel}>Rating</Text>
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+
+      <CustomModal
+        visible={showModal}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        buttons={modalConfig.buttons}
+        onClose={() => setShowModal(false)}
+      />
     </SafeAreaView>
   )
 }

@@ -248,81 +248,109 @@ router.delete(
   }),
 )
 
-// POST /api/packs/:id/join - Join a pack
+// POST /api/packs/:id/join
 router.post(
   "/:id/join",
   auth as RequestHandler,
   asyncHandler(async (req, res) => {
     const authReq = req as AuthRequest
-    const { id } = req.params
-    if (!authReq.user?.uid) {
+    const packId = req.params.id
+    const userId = authReq.user?.uid
+
+    if (!userId) {
       return res.status(401).json({ error: "Authentication required" })
     }
 
-    const packDoc = await collections.packs.doc(id).get()
-    if (!packDoc.exists) {
+    // 1️⃣ Load pack
+    const packRef = collections.packs.doc(packId)
+    const packSnap = await packRef.get()
+    if (!packSnap.exists) {
       return res.status(404).json({ error: "Pack not found" })
     }
+    const packData = packSnap.data()!
 
-    const packData = packDoc.data()
-    if (packData?.members.includes(authReq.user.uid)) {
+    // 2️⃣ Already a member?
+    if (packData.members.includes(userId)) {
       return res.status(400).json({ error: "Already a member" })
     }
 
-    if (packData?.visibility === "private") {
+    // 3️⃣ If private, verify invitation...
+    if (packData.visibility === "private") {
       const inviteSnap = await collections.invitations
-        .where("packId", "==", id)
-        .where("userId", "==", authReq.user.uid)
+        .where("packId", "==", packId)
+        .where("userId", "==", userId)
         .where("status", "==", "pending")
         .limit(1)
         .get()
       if (inviteSnap.empty) {
         return res.status(403).json({ error: "Invitation required" })
       }
-      await inviteSnap.docs[0].ref.update({ status: "accepted", updatedAt: Timestamp.now() })
+      await inviteSnap.docs[0].ref.update({
+        status: "accepted",
+        updatedAt: Timestamp.now(),
+      })
     }
 
-    await collections.packs.doc(id).update({
-      members: admin.firestore.FieldValue.arrayUnion(authReq.user.uid),
+    // 4️⃣ Add user to pack.members
+    await packRef.update({
+      members: admin.firestore.FieldValue.arrayUnion(userId),
       updatedAt: Timestamp.now(),
     })
 
-    res.status(200).json({ message: "Successfully joined the pack" })
-  }),
+    // 5️⃣ ALSO add packId → user.packs (must match your Firestore field!)
+    await collections.users.doc(userId).update({
+      packs: admin.firestore.FieldValue.arrayUnion(packId),
+      updatedAt: Timestamp.now(),
+    })
+
+    return res.status(200).json({ message: "Successfully joined the pack" })
+  })
 )
 
-// POST /api/packs/:id/leave - Leave a pack
+// POST /api/packs/:id/leave
 router.post(
   "/:id/leave",
   auth as RequestHandler,
   asyncHandler(async (req, res) => {
     const authReq = req as AuthRequest
-    const { id } = req.params
-    if (!authReq.user?.uid) {
+    const packId = req.params.id
+    const userId = authReq.user?.uid
+
+    if (!userId) {
       return res.status(401).json({ error: "Authentication required" })
     }
 
-    const packDoc = await collections.packs.doc(id).get()
-    if (!packDoc.exists) {
+    // 1️⃣ Load pack
+    const packRef = collections.packs.doc(packId)
+    const packSnap = await packRef.get()
+    if (!packSnap.exists) {
       return res.status(404).json({ error: "Pack not found" })
     }
+    const packData = packSnap.data()!
 
-    const packData = packDoc.data()
-    if (!packData?.members.includes(authReq.user.uid)) {
+    // 2️⃣ Not a member?
+    if (!packData.members.includes(userId)) {
       return res.status(400).json({ error: "Not a member" })
     }
-
-    if (packData?.owner === authReq.user.uid) {
+    // 3️⃣ Owner cannot leave
+    if (packData.owner === userId) {
       return res.status(400).json({ error: "Owner cannot leave" })
     }
 
-    await collections.packs.doc(id).update({
-      members: admin.firestore.FieldValue.arrayRemove(authReq.user.uid),
+    // 4️⃣ Remove from pack.members
+    await packRef.update({
+      members: admin.firestore.FieldValue.arrayRemove(userId),
       updatedAt: Timestamp.now(),
     })
 
-    res.status(200).json({ message: "Successfully left the pack" })
-  }),
+    // 5️⃣ ALSO remove from user.packs
+    await collections.users.doc(userId).update({
+      packs: admin.firestore.FieldValue.arrayRemove(packId),
+      updatedAt: Timestamp.now(),
+    })
+
+    return res.status(200).json({ message: "Successfully left the pack" })
+  })
 )
 
 // GET /api/packs/:id/routes - Get all routes for a specific pack
@@ -401,7 +429,7 @@ router.get(
           id: memberId,
           fullname: userData?.fullname || "Unknown User",
           username: userData?.username || "unknown",
-          profileImage: userData?.profileImage || null,
+          profileImage: userData?.profilePicUrl || null,
           isOwner: memberId === packData.owner,
         }
       } catch (error) {
