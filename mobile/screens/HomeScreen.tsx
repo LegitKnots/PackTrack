@@ -391,13 +391,13 @@ export default function HomeScreen() {
         }))
 
         showCustomAlert("Success", `${result.updatedCount} notifications marked as read`, [
-          { text: "OK", onPress: () => { } },
+          { text: "OK", onPress: () => {} },
         ])
         return true
       }
     } catch (error) {
       console.error("Error marking all notifications as read:", error)
-      showCustomAlert("Error", "Failed to mark notifications as read", [{ text: "OK", onPress: () => { } }])
+      showCustomAlert("Error", "Failed to mark notifications as read", [{ text: "OK", onPress: () => {} }])
     } finally {
       setNotificationsLoading(false)
     }
@@ -472,12 +472,12 @@ export default function HomeScreen() {
           },
         }))
 
-        showCustomAlert("Success", `${result.deletedCount} notifications deleted`, [{ text: "OK", onPress: () => { } }])
+        showCustomAlert("Success", `${result.deletedCount} notifications deleted`, [{ text: "OK", onPress: () => {} }])
         return true
       }
     } catch (error) {
       console.error("Error deleting notifications:", error)
-      showCustomAlert("Error", "Failed to delete notifications", [{ text: "OK", onPress: () => { } }])
+      showCustomAlert("Error", "Failed to delete notifications", [{ text: "OK", onPress: () => {} }])
     } finally {
       setNotificationsLoading(false)
     }
@@ -588,7 +588,7 @@ export default function HomeScreen() {
       }).start()
     } catch (error) {
       console.error("Error loading dashboard data:", error)
-      showCustomAlert("Error", "Failed to load dashboard data. Please try again.", [{ text: "OK", onPress: () => { } }])
+      showCustomAlert("Error", "Failed to load dashboard data. Please try again.", [{ text: "OK", onPress: () => {} }])
     } finally {
       setLoading(false)
     }
@@ -620,7 +620,7 @@ export default function HomeScreen() {
   )
 
   const handleRidePress = (ride: UpcomingRide) => {
-    ; (navigation as any).navigate("PackDetails", { packId: ride.packId })
+    ;(navigation as any).navigate("PackDetails", { packId: ride.packId })
   }
 
   const handleNotificationPress = async (notification: Notification) => {
@@ -633,9 +633,9 @@ export default function HomeScreen() {
     try {
       const data = JSON.parse(notification.data)
       if (data.packId) {
-        ; (navigation as any).navigate("PackDetails", { packId: data.packId })
+        ;(navigation as any).navigate("PackDetails", { packId: data.packId })
       } else if (data.routeId) {
-        ; (navigation as any).navigate("RouteDetails", { routeId: data.routeId })
+        ;(navigation as any).navigate("RouteDetails", { routeId: data.routeId })
       }
     } catch (error) {
       console.error("Error parsing notification data:", error)
@@ -644,7 +644,7 @@ export default function HomeScreen() {
 
   const handleNotificationLongPress = (notification: Notification) => {
     showCustomAlert("Notification Options", "What would you like to do with this notification?", [
-      { text: "Cancel", onPress: () => { }, style: "cancel" },
+      { text: "Cancel", onPress: () => {}, style: "cancel" },
       {
         text: notification.read ? "Mark as Unread" : "Mark as Read",
         onPress: () => markNotificationAsRead(notification.id),
@@ -662,23 +662,23 @@ export default function HomeScreen() {
     const hasRead = dashboardData.notifications.some((n) => n.read)
 
     showCustomAlert("Notification Actions", "Choose an action for your notifications", [
-      { text: "Cancel", onPress: () => { }, style: "cancel" },
+      { text: "Cancel", onPress: () => {}, style: "cancel" },
       ...(hasUnread
         ? [
-          {
-            text: "Mark All Read",
-            onPress: markAllNotificationsAsRead,
-          },
-        ]
+            {
+              text: "Mark All Read",
+              onPress: markAllNotificationsAsRead,
+            },
+          ]
         : []),
       ...(hasRead
         ? [
-          {
-            text: "Delete Read",
-            onPress: () => deleteAllNotifications(true),
-            style: "destructive" as const,
-          },
-        ]
+            {
+              text: "Delete Read",
+              onPress: () => deleteAllNotifications(true),
+              style: "destructive" as const,
+            },
+          ]
         : []),
       {
         text: "Delete All",
@@ -687,7 +687,7 @@ export default function HomeScreen() {
             "Confirm Delete All",
             "Are you sure you want to delete all notifications? This cannot be undone.",
             [
-              { text: "Cancel", onPress: () => { }, style: "cancel" },
+              { text: "Cancel", onPress: () => {}, style: "cancel" },
               {
                 text: "Delete All",
                 onPress: () => deleteAllNotifications(false),
@@ -746,9 +746,9 @@ export default function HomeScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { paddingBottom: insets.bottom || 10 }]}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 100 }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#f3631a" />}
         showsVerticalScrollIndicator={false}
       >
@@ -856,9 +856,7 @@ export default function HomeScreen() {
                     <View style={styles.notificationContent}>
                       <Text style={styles.notificationTitle}>{notification.title}</Text>
                       <Text style={styles.notificationText} numberOfLines={2}>
-                        {typeof notification.data === "string"
-                          ? notification.data
-                          : JSON.stringify(notification.data)}
+                        {typeof notification.data === "string" ? notification.data : JSON.stringify(notification.data)}
                       </Text>
                       <Text style={styles.notificationTime}>{formatNotificationTime(notification.createdAt)}</Text>
                     </View>
@@ -907,9 +905,6 @@ export default function HomeScreen() {
               ))}
             </View>
           )}
-
-          {/* Bottom Spacing */}
-          <View style={styles.bottomSpacing} />
         </Animated.View>
       </ScrollView>
 

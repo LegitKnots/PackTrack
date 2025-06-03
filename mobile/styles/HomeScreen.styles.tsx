@@ -1,6 +1,6 @@
 import { StyleSheet, Dimensions } from "react-native"
 
-const { width } = Dimensions.get("window")
+const { width, height } = Dimensions.get("window")
 
 export const styles = StyleSheet.create({
   container: {
@@ -19,30 +19,34 @@ export const styles = StyleSheet.create({
     textAlign: "center",
   },
   scrollContent: {
-    padding: 20,
+    padding: 16,
+    paddingTop: 8,
   },
   header: {
-    marginBottom: 24,
+    marginBottom: 20,
+    paddingTop: 8,
   },
   greeting: {
-    fontSize: 28,
+    fontSize: Math.min(28, width * 0.07),
     color: "#fff",
     fontWeight: "700",
     marginBottom: 4,
+    lineHeight: Math.min(34, width * 0.085),
   },
   name: {
     fontWeight: "bold",
     color: "#f3631a",
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: Math.min(16, width * 0.04),
     color: "#aaa",
+    lineHeight: Math.min(20, width * 0.05),
   },
   weatherSection: {
     backgroundColor: "#2a2a2a",
     borderRadius: 16,
-    padding: 20, // Changed back from 16
-    marginBottom: 20,
+    padding: 16,
+    marginBottom: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -52,23 +56,23 @@ export const styles = StyleSheet.create({
   weatherMain: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 16, // Added back
+    marginBottom: 12,
   },
   weatherIconLarge: {
-    fontSize: 40, // Reduced from 48
-    marginRight: 16, // Reduced from 20
+    fontSize: Math.min(36, width * 0.09),
+    marginRight: 16,
   },
   weatherInfo: {
     flex: 1,
   },
   weatherTempLarge: {
-    fontSize: 32, // Reduced from 36
+    fontSize: Math.min(28, width * 0.07),
     fontWeight: "bold",
     color: "#fff",
-    marginBottom: 2, // Reduced from 4
+    marginBottom: 2,
   },
   weatherConditionLarge: {
-    fontSize: 16, // Reduced from 18
+    fontSize: Math.min(16, width * 0.04),
     color: "#fff",
     fontWeight: "600",
   },
@@ -81,6 +85,7 @@ export const styles = StyleSheet.create({
   },
   weatherDetailItem: {
     alignItems: "center",
+    flex: 1,
   },
   weatherDetailIcon: {
     fontSize: 16,
@@ -99,48 +104,49 @@ export const styles = StyleSheet.create({
   statsContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 24,
+    marginBottom: 20,
+    gap: 8,
   },
   statCard: {
     backgroundColor: "#2a2a2a",
     borderRadius: 12,
     padding: 16,
     flex: 1,
-    marginHorizontal: 4,
     borderLeftWidth: 4,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 5,
+    minHeight: 80,
   },
   statValue: {
-    fontSize: 24,
+    fontSize: Math.min(24, width * 0.06),
     fontWeight: "bold",
     color: "#fff",
     marginBottom: 4,
   },
   statTitle: {
-    fontSize: 12,
+    fontSize: Math.min(12, width * 0.03),
     color: "#aaa",
     fontWeight: "600",
   },
   statSubtitle: {
-    fontSize: 10,
+    fontSize: Math.min(10, width * 0.025),
     color: "#666",
     marginTop: 2,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: Math.min(20, width * 0.05),
     fontWeight: "bold",
     color: "#fff",
   },
@@ -159,7 +165,7 @@ export const styles = StyleSheet.create({
     backgroundColor: "#2a2a2a",
     borderRadius: 12,
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 8,
     flexDirection: "row",
     alignItems: "flex-start",
     shadowColor: "#000",
@@ -174,35 +180,35 @@ export const styles = StyleSheet.create({
     backgroundColor: "#2d2d2d",
   },
   notificationIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: "#f3631a",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
   },
   notificationIconText: {
-    fontSize: 18,
+    fontSize: 16,
   },
   notificationContent: {
     flex: 1,
   },
   notificationTitle: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: Math.min(16, width * 0.04),
     fontWeight: "600",
     marginBottom: 4,
   },
   notificationText: {
     color: "#aaa",
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: Math.min(14, width * 0.035),
+    lineHeight: Math.min(18, width * 0.045),
     marginBottom: 4,
   },
   notificationTime: {
     color: "#666",
-    fontSize: 12,
+    fontSize: Math.min(12, width * 0.03),
   },
   notificationIndicator: {
     width: 8,
@@ -219,17 +225,18 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 1,
     borderColor: "#444",
+    marginTop: 8,
   },
   viewAllText: {
     color: "#f3631a",
-    fontSize: 14,
+    fontSize: Math.min(14, width * 0.035),
     fontWeight: "600",
   },
   rideCard: {
     backgroundColor: "#2a2a2a",
     borderRadius: 12,
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 8,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -244,13 +251,13 @@ export const styles = StyleSheet.create({
   },
   rideDestination: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: Math.min(16, width * 0.04),
     fontWeight: "600",
     marginBottom: 4,
   },
   ridePack: {
     color: "#aaa",
-    fontSize: 14,
+    fontSize: Math.min(14, width * 0.035),
   },
   rideTime: {
     alignItems: "center",
@@ -258,7 +265,7 @@ export const styles = StyleSheet.create({
   },
   rideTimeText: {
     color: "#f3631a",
-    fontSize: 16,
+    fontSize: Math.min(16, width * 0.04),
     fontWeight: "bold",
     marginRight: 8,
   },
@@ -270,30 +277,30 @@ export const styles = StyleSheet.create({
   emptyState: {
     backgroundColor: "#2a2a2a",
     borderRadius: 12,
-    padding: 32,
+    padding: 24,
     alignItems: "center",
     borderStyle: "dashed",
     borderWidth: 2,
     borderColor: "#444",
   },
   emptyStateIcon: {
-    fontSize: 32,
-    marginBottom: 12,
+    fontSize: 28,
+    marginBottom: 8,
   },
   emptyStateText: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: Math.min(16, width * 0.04),
     fontWeight: "600",
     marginBottom: 4,
   },
   emptyStateSubtext: {
     color: "#aaa",
-    fontSize: 14,
+    fontSize: Math.min(14, width * 0.035),
   },
   activityItem: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 12,
   },
   activityDot: {
     width: 8,
@@ -307,7 +314,7 @@ export const styles = StyleSheet.create({
   },
   activityText: {
     color: "#fff",
-    fontSize: 14,
+    fontSize: Math.min(14, width * 0.035),
     marginBottom: 2,
   },
   activityAction: {
@@ -319,7 +326,7 @@ export const styles = StyleSheet.create({
   },
   activityTime: {
     color: "#aaa",
-    fontSize: 12,
+    fontSize: Math.min(12, width * 0.03),
   },
   bottomSpacing: {
     height: 20,
@@ -336,7 +343,7 @@ export const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 24,
     width: "100%",
-    maxWidth: 320,
+    maxWidth: Math.min(320, width * 0.9),
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -344,18 +351,18 @@ export const styles = StyleSheet.create({
     elevation: 8,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: Math.min(18, width * 0.045),
     fontWeight: "bold",
     color: "#fff",
     marginBottom: 8,
     textAlign: "center",
   },
   modalMessage: {
-    fontSize: 14,
+    fontSize: Math.min(14, width * 0.035),
     color: "#aaa",
     marginBottom: 24,
     textAlign: "center",
-    lineHeight: 20,
+    lineHeight: Math.min(20, width * 0.05),
   },
   modalButtonContainer: {
     flexDirection: "row",
@@ -379,7 +386,7 @@ export const styles = StyleSheet.create({
     backgroundColor: "#dc3545",
   },
   modalButtonText: {
-    fontSize: 14,
+    fontSize: Math.min(14, width * 0.035),
     fontWeight: "600",
     color: "#fff",
   },
