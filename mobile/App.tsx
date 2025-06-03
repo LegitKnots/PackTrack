@@ -3,6 +3,7 @@
 import { enableScreens } from "react-native-screens"
 enableScreens()
 
+import notifee, { AuthorizationStatus, EventType } from "@notifee/react-native"
 import { useEffect } from "react"
 import { Platform } from "react-native"
 import { NavigationContainer } from "@react-navigation/native"
@@ -44,6 +45,24 @@ export default function App() {
     if (Platform.OS === "android") {
       changeNavigationBarColor("#000000", true, true)
     }
+
+    // Ask for notification permission globally
+    async function requestNotificationPermission() {
+      try {
+        const settings = await notifee.requestPermission()
+        const granted = settings.authorizationStatus >= AuthorizationStatus.AUTHORIZED
+
+        if (granted) {
+          console.log("✅ Notification permission granted")
+        } else {
+          console.warn("❌ Notification permission denied")
+        }
+      } catch (error) {
+        console.error("Error requesting notification permission:", error)
+      }
+    }
+
+    requestNotificationPermission()
   }, [])
 
   return (

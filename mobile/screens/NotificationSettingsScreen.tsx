@@ -16,7 +16,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useNavigation } from "@react-navigation/native"
 import MaterialIcons from "react-native-vector-icons/MaterialIcons"
-import PushNotification from "react-native-push-notification"
+import notifee, { AuthorizationStatus } from "@notifee/react-native"
 import { styles } from "../styles/SettingsScreen.styles"
 import { useSettings } from "../context/SettingsContext"
 
@@ -91,50 +91,15 @@ export default function NotificationSettingsScreen() {
 
   useEffect(() => {
     checkNotificationPermission()
-    initializePushNotifications()
   }, [])
 
   const checkNotificationPermission = async () => {
     try {
-      if (Platform.OS === "android") {
-        const granted = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS)
-        setNotificationPermission(granted)
-      } else {
-        setNotificationPermission(true)
-      }
+      const settings = await notifee.getNotificationSettings()
+      const granted = settings.authorizationStatus >= AuthorizationStatus.AUTHORIZED
+      setNotificationPermission(granted)
     } catch (error) {
       console.error("Error checking notification permission:", error)
-      setNotificationPermission(false)
-    }
-  }
-
-  const initializePushNotifications = () => {
-    try {
-      PushNotification.configure({
-        onRegister: (token) => {
-          console.log("TOKEN:", token)
-          setNotificationPermission(true)
-        },
-        onNotification: (notification) => {
-          console.log("NOTIFICATION:", notification)
-        },
-        onAction: (notification) => {
-          console.log("ACTION:", notification.action)
-        },
-        onRegistrationError: (err) => {
-          console.error("Push notification registration error:", err)
-          setNotificationPermission(false)
-        },
-        permissions: {
-          alert: true,
-          badge: true,
-          sound: true,
-        },
-        popInitialNotification: true,
-        requestPermissions: false,
-      })
-    } catch (error) {
-      console.error("Error initializing push notifications:", error)
       setNotificationPermission(false)
     }
   }
@@ -149,42 +114,14 @@ export default function NotificationSettingsScreen() {
           buttonNegative: "Cancel",
           buttonPositive: "OK",
         })
-
         const isGranted = granted === PermissionsAndroid.RESULTS.GRANTED
         setNotificationPermission(isGranted)
-
-        if (isGranted) {
-          try {
-            await new Promise((resolve) => {
-              PushNotification.requestPermissions().then(resolve).catch(resolve)
-            })
-          } catch (error) {
-            console.error("Error requesting push notification permissions:", error)
-          }
-        }
-
         return isGranted
       } else {
-        // iOS
-        return new Promise((resolve) => {
-          try {
-            PushNotification.requestPermissions()
-              .then((permissions) => {
-                const granted = permissions.alert || permissions.badge || permissions.sound
-                setNotificationPermission(granted)
-                resolve(granted)
-              })
-              .catch((error) => {
-                console.error("Error requesting iOS permissions:", error)
-                setNotificationPermission(false)
-                resolve(false)
-              })
-          } catch (error) {
-            console.error("Error requesting iOS push notification permissions:", error)
-            setNotificationPermission(false)
-            resolve(false)
-          }
-        })
+        const settings = await notifee.requestPermission()
+        const granted = settings.authorizationStatus >= AuthorizationStatus.AUTHORIZED
+        setNotificationPermission(granted)
+        return granted
       }
     } catch (error) {
       console.error("Error requesting notification permission:", error)
@@ -195,22 +132,24 @@ export default function NotificationSettingsScreen() {
 
   const handlePushNotificationToggle = async (value: boolean) => {
     if (value) {
-      // User wants to enable notifications
       if (!notificationPermission) {
-        // Need to request permission first
         const granted = await requestNotificationPermission()
         if (granted) {
+          await notifee.displayNotification({
+            title: "Notifications enabled!",
+            body: "You will now receive push alerts.",
+            android: {
+              channelId: 'default',
+            },
+          })
           await updateSetting("notifications", "push", true)
         } else {
-          // Permission denied, keep toggle off
           await updateSetting("notifications", "push", false)
         }
       } else {
-        // Permission already granted, just enable
         await updateSetting("notifications", "push", true)
       }
     } else {
-      // User wants to disable notifications
       await updateSetting("notifications", "push", false)
     }
   }
@@ -236,7 +175,6 @@ export default function NotificationSettingsScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Push Notifications */}
         <SettingSection title="Push Notifications">
           <SettingItem
             icon="notifications"
@@ -257,7 +195,6 @@ export default function NotificationSettingsScreen() {
           )}
         </SettingSection>
 
-        {/* Email Notifications */}
         <SettingSection title="Email Notifications">
           <SettingItem
             icon="email"
@@ -269,7 +206,6 @@ export default function NotificationSettingsScreen() {
           />
         </SettingSection>
 
-        {/* Notification Types */}
         <SettingSection title="Notification Types">
           <SettingItem
             icon="group"
