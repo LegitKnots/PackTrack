@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useCallback } from "react"
+import { useState, useCallback } from "react"
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   Alert,
   ActivityIndicator,
   Modal,
+  StatusBar,
 } from "react-native"
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native"
 import AsyncStorage from "@react-native-async-storage/async-storage"
@@ -19,6 +20,7 @@ import { SERVER_URI, PRIMARY_APP_COLOR } from "../config"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import type { RouteProp } from "@react-navigation/native"
 import type { RootStackParamList } from "../types/navigation"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 type PackMembersScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, "PackMembers">
 type PackMembersScreenRouteProp = RouteProp<RootStackParamList, "PackMembers">
@@ -35,6 +37,7 @@ export default function PackMembersScreen() {
   const navigation = useNavigation<PackMembersScreenNavigationProp>()
   const route = useRoute<PackMembersScreenRouteProp>()
   const { packId } = route.params
+  const insets = useSafeAreaInsets()
 
   const [members, setMembers] = useState<Member[]>([])
   const [loading, setLoading] = useState(true)
@@ -245,13 +248,18 @@ export default function PackMembersScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
+      <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
+
+      {/* Status bar background fill */}
+      <View style={[styles.statusBarFill, { height: insets.top }]} />
+
+      {/* Header positioned right under dynamic island */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <ChevronLeft color="white" size={26} />
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <ChevronLeft size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Pack Members</Text>
-        <View style={{ width: 26 }} />
+        <View style={{ width: 24 }} />
       </View>
 
       {/* Content */}
@@ -301,16 +309,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#121212",
   },
+  statusBarFill: {
+    backgroundColor: "#1a1a1a",
+  },
   header: {
-    height: 60,
-    backgroundColor: "#1e1e1e",
-    paddingHorizontal: 16,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "#1a1a1a",
+    height: 60,
+  },
+  backButton: {
+    padding: 8,
   },
   headerTitle: {
-    color: "white",
+    color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
   },
