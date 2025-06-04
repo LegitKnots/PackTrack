@@ -2,23 +2,14 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  Switch,
-  StatusBar,
-  Platform,
-  PermissionsAndroid,
-  Linking,
-} from "react-native"
+import { View, Text, TouchableOpacity, ScrollView, Switch, Platform, PermissionsAndroid, Linking } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useNavigation } from "@react-navigation/native"
 import MaterialIcons from "react-native-vector-icons/MaterialIcons"
 import notifee, { AuthorizationStatus } from "@notifee/react-native"
 import { styles } from "../styles/SettingsScreen.styles"
 import { useSettings } from "../context/SettingsContext"
+import Header from "../components/Header"
 
 interface SettingItemProps {
   title: string
@@ -139,7 +130,7 @@ export default function NotificationSettingsScreen() {
             title: "Notifications enabled!",
             body: "You will now receive push alerts.",
             android: {
-              channelId: 'default',
+              channelId: "default",
             },
           })
           await updateSetting("notifications", "push", true)
@@ -163,16 +154,8 @@ export default function NotificationSettingsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
-
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <MaterialIcons name="arrow-back" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Notifications</Text>
-        <View style={styles.resetButton} />
-      </View>
+    <SafeAreaView style={styles.container} edges={["bottom"]}>
+      <Header title="Notifications" onBackPress={() => navigation.goBack()} />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <SettingSection title="Push Notifications">

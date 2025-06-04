@@ -1,13 +1,14 @@
 "use client"
 
 import type React from "react"
-import { View, Text, TouchableOpacity, ScrollView, StatusBar, Alert, Linking, Platform } from "react-native"
+import { View, Text, TouchableOpacity, ScrollView, Alert, Linking, Platform } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useNavigation } from "@react-navigation/native"
 import MaterialIcons from "react-native-vector-icons/MaterialIcons"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { styles } from "../styles/SettingsScreen.styles"
 import { useSettings } from "../context/SettingsContext"
+import Header from "../components/Header"
 
 interface SettingItemProps {
   title: string
@@ -90,7 +91,7 @@ export default function SettingsScreen() {
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
+        <Header title="Settings" onBackPress={() => navigation.goBack()} />
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Loading Settings...</Text>
         </View>
@@ -99,18 +100,13 @@ export default function SettingsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
-
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <MaterialIcons name="arrow-back" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Settings</Text>
-        <TouchableOpacity onPress={handleResetSettings} style={styles.resetButton}>
-          <MaterialIcons name="refresh" size={20} color="#f3631a" />
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView style={styles.container} edges={["bottom"]}>
+      <Header
+        title="Settings"
+        onBackPress={() => navigation.goBack()}
+        rightIcon="refresh"
+        onRightPress={handleResetSettings}
+      />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Main Settings Categories */}

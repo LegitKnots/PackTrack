@@ -2,12 +2,13 @@
 
 import type React from "react"
 import { useState } from "react"
-import { View, Text, TouchableOpacity, ScrollView, Switch, StatusBar } from "react-native"
+import { View, Text, TouchableOpacity, ScrollView, Switch } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useNavigation } from "@react-navigation/native"
 import MaterialIcons from "react-native-vector-icons/MaterialIcons"
 import { styles } from "../styles/SettingsScreen.styles"
 import { useSettings } from "../context/SettingsContext"
+import Header from "../components/Header"
 
 interface SettingItemProps {
   title: string
@@ -66,16 +67,8 @@ export default function PrivacySettingsScreen() {
   const [activeSection, setActiveSection] = useState<string | null>(null)
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
-
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <MaterialIcons name="arrow-back" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Privacy</Text>
-        <View style={styles.resetButton} />
-      </View>
+    <SafeAreaView style={styles.container} edges={["bottom"]}>
+      <Header title="Privacy" onBackPress={() => navigation.goBack()} />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Profile */}
