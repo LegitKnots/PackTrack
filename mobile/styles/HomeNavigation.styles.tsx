@@ -1,21 +1,52 @@
-import { StyleSheet } from "react-native"
+import { StyleSheet, Dimensions } from "react-native"
+
+const { width: screenWidth, height: screenHeight } = Dimensions.get("window")
+const isTablet = screenWidth >= 768
+const isSmallDevice = screenWidth < 375
 
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1e1e1e",
+    backgroundColor: "#121212",
   },
-
-  content: {
-    flex: 1,
-    justifyContent: "center",
+  tabBarContainer: {
+    backgroundColor: "#1a1a1a",
+    borderTopWidth: 1,
+    borderTopColor: "#333",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  tabBarContent: {
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-around",
+    paddingHorizontal: isTablet ? 40 : 16,
+    paddingTop: isTablet ? 12 : 8,
+    minHeight: 60,
   },
-
-  title: {
-    fontSize: 64,
-    fontWeight: "bold",
+  tabItem: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: isTablet ? 8 : 6,
+    minHeight: 44, // Accessibility minimum
+    maxWidth: isTablet ? 120 : 80,
+  },
+  tabIcon: {
+    marginBottom: 4,
+  },
+  tabLabel: {
+    fontSize: isTablet ? 14 : isSmallDevice ? 11 : 12,
+    fontWeight: "500",
+    textAlign: "center",
+  },
+  activeTabLabel: {
     color: "#f3631a",
-    marginBottom: 10,
+  },
+  inactiveTabLabel: {
+    color: "#666",
   },
 })

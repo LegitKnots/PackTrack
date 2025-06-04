@@ -1,7 +1,8 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
-import { Modal, View, Text, TextInput, TouchableOpacity, FlatList, Alert, Switch } from "react-native"
+import { useState, useEffect } from "react"
+import { Modal, View, Text, TextInput, TouchableOpacity, FlatList, Alert, Switch, StatusBar } from "react-native"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { styles } from "../styles/CreateModal.styles"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { SERVER_URI, GOOGLE_MAPS_APIKEY } from "../config"
@@ -14,6 +15,7 @@ interface CreateRouteModalProps {
 }
 
 export default function CreateRouteModal({ visible, onClose, onCreate }: CreateRouteModalProps) {
+  const insets = useSafeAreaInsets()
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [startPoint, setStartPoint] = useState<any>(null)
@@ -178,6 +180,11 @@ export default function CreateRouteModal({ visible, onClose, onCreate }: CreateR
   const renderPlacesModal = () => (
     <Modal visible={!!showSearchType} animationType="slide">
       <View style={styles.searchModalContainer}>
+        <StatusBar barStyle="light-content" backgroundColor="#1e1e1e" />
+
+        {/* Status Bar Fill */}
+        <View style={[styles.statusBarFill, { height: insets.top }]} />
+
         <Text style={styles.modalHeader}>Search for {showSearchType} location</Text>
         <TextInput
           ref={setInputRef}
@@ -226,6 +233,11 @@ export default function CreateRouteModal({ visible, onClose, onCreate }: CreateR
   return (
     <Modal visible={visible} animationType="slide">
       <View style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor="#1e1e1e" />
+
+        {/* Status Bar Fill */}
+        <View style={[styles.statusBarFill, { height: insets.top }]} />
+
         <Text style={styles.header}>New Route</Text>
 
         <View style={styles.toggleContainer}>
@@ -264,7 +276,7 @@ export default function CreateRouteModal({ visible, onClose, onCreate }: CreateR
             <TextInput
               placeholder="Start Label"
               value={startPoint?.label || ""}
-              onChangeText={(text) => setStartPoint((prev:any) => ({ ...prev, label: text }))}
+              onChangeText={(text) => setStartPoint((prev: any) => ({ ...prev, label: text }))}
               style={styles.compactInput}
               placeholderTextColor="#aaa"
             />
@@ -297,7 +309,7 @@ export default function CreateRouteModal({ visible, onClose, onCreate }: CreateR
             <TextInput
               placeholder="End Label"
               value={endPoint?.label || ""}
-              onChangeText={(text) => setEndPoint((prev:any) => ({ ...prev, label: text }))}
+              onChangeText={(text) => setEndPoint((prev: any) => ({ ...prev, label: text }))}
               style={styles.compactInput}
               placeholderTextColor="#aaa"
             />

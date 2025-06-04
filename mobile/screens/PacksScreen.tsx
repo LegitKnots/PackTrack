@@ -22,6 +22,7 @@ import { styles as globalStyles } from "../styles/RoutesScreen.styles"
 import CreatePackModal from "../components/CreatePackModal"
 import QRCodeScanner from "../components/QRCodeScanner"
 import PackPreviewModal from "../components/PackPreviewModal"
+import SafeContainer from "../components/SafeContainer"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import type { RootStackParamList } from "../types/navigation"
 import type { PackDetails } from "../types/Pack"
@@ -331,11 +332,11 @@ export default function PacksScreen() {
       style={styles.packCard}
       key={pack.id}
       onPress={() => {
-        if (activeTab !== 'find') {
-          navigation.navigate("PackDetails", { pack });
+        if (activeTab !== "find") {
+          navigation.navigate("PackDetails", { pack })
         } else {
-          setPreviewModalVisible(true);
-          setPreviewPack(pack);
+          setPreviewModalVisible(true)
+          setPreviewPack(pack)
         }
       }}
     >
@@ -493,7 +494,7 @@ export default function PacksScreen() {
 
     if (hasSearched && Array.isArray(searchResults) && searchResults.length > 0) {
       return (
-        <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
+        <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
           {searchResults.map((pack) => renderPackCard(pack))}
         </ScrollView>
       )
@@ -527,7 +528,7 @@ export default function PacksScreen() {
   }
 
   return (
-    <View style={globalStyles.container}>
+    <SafeContainer style={globalStyles.container}>
       <View style={globalStyles.tabs}>
         <TouchableOpacity style={globalStyles.tab} onPress={() => setActiveTab("my")}>
           <Text style={[globalStyles.tabText, activeTab === "my" && globalStyles.activeTabText]}>My Packs</Text>
@@ -559,7 +560,7 @@ export default function PacksScreen() {
                 refreshControl={
                   <RefreshControl refreshing={refreshing} onRefresh={fetchPacks} tintColor={PRIMARY_APP_COLOR} />
                 }
-                contentContainerStyle={{ paddingBottom: 20 }}
+                contentContainerStyle={{ paddingBottom: 120 }}
               >
                 {Array.isArray(myPacks) && myPacks.length > 0 ? (
                   myPacks.map((pack) => renderPackCard(pack))
@@ -605,7 +606,7 @@ export default function PacksScreen() {
                 style={[
                   styles.filterButton,
                   ((Array.isArray(filters.tags) && filters.tags.length > 0) || filters.hasChat !== null) &&
-                  styles.filterButtonActive,
+                    styles.filterButtonActive,
                 ]}
                 onPress={() => setFilterModalVisible(true)}
               >
@@ -679,7 +680,7 @@ export default function PacksScreen() {
 
       {/* Filter Modal */}
       {renderFilterModal()}
-    </View>
+    </SafeContainer>
   )
 }
 

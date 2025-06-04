@@ -1,4 +1,6 @@
-import React, { useState } from "react"
+"use client"
+
+import { useState } from "react"
 import {
   Modal,
   View,
@@ -11,12 +13,17 @@ import {
   Image,
   Alert,
   ActivityIndicator,
+  Dimensions,
+  StatusBar,
 } from "react-native"
-import { X, Camera, Plus, Trash2 } from "lucide-react-native"
+import { X, Camera, Plus } from "lucide-react-native"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { launchImageLibrary } from "react-native-image-picker"
 import { SERVER_URI, PRIMARY_APP_COLOR } from "../config"
 import type { PackDetails } from "../types/Pack"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
+
+const { width: screenWidth, height: screenHeight } = Dimensions.get("window")
 
 interface CreatePackModalProps {
   visible: boolean
@@ -25,6 +32,7 @@ interface CreatePackModalProps {
 }
 
 export default function CreatePackModal({ visible, onClose, onCreate }: CreatePackModalProps) {
+  const insets = useSafeAreaInsets()
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [visibility, setVisibility] = useState<"private" | "public">("private")
@@ -35,8 +43,16 @@ export default function CreatePackModal({ visible, onClose, onCreate }: CreatePa
   const [loading, setLoading] = useState(false)
 
   const popularTags = [
-    "Cycling", "Mountain Biking", "Road Biking", "Gravel", "Racing", 
-    "Casual", "Training", "Commuting", "Weekend", "Local"
+    "Cycling",
+    "Mountain Biking",
+    "Road Biking",
+    "Gravel",
+    "Racing",
+    "Casual",
+    "Training",
+    "Commuting",
+    "Weekend",
+    "Local",
   ]
 
   const resetForm = () => {
@@ -112,11 +128,11 @@ export default function CreatePackModal({ visible, onClose, onCreate }: CreatePa
       formData.append("description", description)
       formData.append("visibility", visibility)
       formData.append("options", JSON.stringify({ hasChat }))
-      
+
       if (visibility === "public" && tags.length > 0) {
         formData.append("tags", JSON.stringify(tags))
       }
-      
+
       if (image) {
         formData.append("image", {
           uri: image.uri,
@@ -152,6 +168,12 @@ export default function CreatePackModal({ visible, onClose, onCreate }: CreatePa
   return (
     <Modal visible={visible} animationType="slide" transparent={false}>
       <View style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
+
+        {/* Status bar background fill */}
+        <View style={[styles.statusBarFill, { height: insets.top }]} />
+
+        {/* Header positioned right under dynamic island */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Create New Pack</Text>
           <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
@@ -159,7 +181,11 @@ export default function CreatePackModal({ visible, onClose, onCreate }: CreatePa
           </TouchableOpacity>
         </View>
 
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={styles.content}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
           <TouchableOpacity style={styles.imageSelector} onPress={selectImage}>
             {image ? (
               <Image source={{ uri: image.uri }} style={styles.selectedImage} />
@@ -226,7 +252,7 @@ export default function CreatePackModal({ visible, onClose, onCreate }: CreatePa
             <View style={styles.tagsSection}>
               <Text style={styles.label}>Tags (for public packs)</Text>
               <Text style={styles.tagsHelper}>Add tags to help others find your pack</Text>
-              
+
               <View style={styles.tagInputContainer}>
                 <TextInput
                   style={styles.tagInput}
@@ -240,7 +266,7 @@ export default function CreatePackModal({ visible, onClose, onCreate }: CreatePa
                   <Plus color="white" size={20} />
                 </TouchableOpacity>
               </View>
-              
+
               {tags.length > 0 && (
                 <View style={styles.selectedTags}>
                   {tags.map((tag) => (
@@ -253,7 +279,7 @@ export default function CreatePackModal({ visible, onClose, onCreate }: CreatePa
                   ))}
                 </View>
               )}
-              
+
               <Text style={styles.popularTagsLabel}>Popular Tags</Text>
               <View style={styles.popularTagsContainer}>
                 {popularTags.map((tag) => (
@@ -294,36 +320,49 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#121212",
   },
+  statusBarFill: {
+    backgroundColor: "#1a1a1a", // Same as header background
+    width: "100%",
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 16,
+    paddingVertical: 20,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
     borderBottomColor: "#333",
     backgroundColor: "#1a1a1a",
+    minHeight: 70,
   },
   headerTitle: {
     color: "white",
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
   },
   closeButton: {
     position: "absolute",
-    right: 16,
-    padding: 4,
+    right: 20,
+    padding: 8,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: "center",
+    alignItems: "center",
   },
   content: {
     flex: 1,
-    padding: 20,
+    backgroundColor: "#121212",
+  },
+  scrollContent: {
+    padding: 24,
+    paddingBottom: 40,
   },
   imageSelector: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
     alignSelf: "center",
-    marginBottom: 24,
+    marginBottom: 32,
     overflow: "hidden",
   },
   imagePlaceholder: {
@@ -335,7 +374,7 @@ const styles = StyleSheet.create({
   },
   imagePlaceholderText: {
     color: "#aaa",
-    fontSize: 12,
+    fontSize: 14,
     marginTop: 8,
   },
   selectedImage: {
@@ -344,33 +383,36 @@ const styles = StyleSheet.create({
   },
   label: {
     color: "white",
-    fontSize: 16,
-    marginBottom: 8,
-    fontWeight: "500",
+    fontSize: 18,
+    marginBottom: 12,
+    fontWeight: "600",
   },
   input: {
     backgroundColor: "#2a2a2a",
     color: "white",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
     fontSize: 16,
+    minHeight: 52,
   },
   textArea: {
-    height: 100,
+    height: 120,
     textAlignVertical: "top",
   },
   visibilitySelector: {
     flexDirection: "row",
-    marginBottom: 16,
+    marginBottom: 20,
+    gap: 12,
   },
   visibilityOption: {
     flex: 1,
     backgroundColor: "#2a2a2a",
-    paddingVertical: 12,
+    paddingVertical: 16,
     alignItems: "center",
-    marginRight: 8,
-    borderRadius: 8,
+    borderRadius: 12,
+    minHeight: 52,
+    justifyContent: "center",
   },
   visibilityOptionSelected: {
     backgroundColor: PRIMARY_APP_COLOR,
@@ -378,96 +420,99 @@ const styles = StyleSheet.create({
   visibilityText: {
     color: "#ddd",
     fontSize: 16,
+    fontWeight: "500",
   },
   visibilityTextSelected: {
     color: "white",
-    fontWeight: "500",
+    fontWeight: "600",
   },
   toggleContainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     backgroundColor: "#2a2a2a",
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 20,
+    minHeight: 52,
   },
   toggleLabel: {
     color: "white",
     fontSize: 16,
+    fontWeight: "500",
   },
   tagsSection: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   tagsHelper: {
     color: "#aaa",
-    fontSize: 12,
-    marginBottom: 8,
+    fontSize: 14,
+    marginBottom: 12,
   },
   tagInputContainer: {
     flexDirection: "row",
-    marginBottom: 12,
+    marginBottom: 16,
+    gap: 12,
   },
   tagInput: {
     flex: 1,
     backgroundColor: "#2a2a2a",
     color: "white",
-    borderRadius: 8,
-    padding: 12,
-    marginRight: 8,
+    borderRadius: 12,
+    padding: 16,
     fontSize: 16,
+    minHeight: 52,
   },
   addTagButton: {
     backgroundColor: PRIMARY_APP_COLOR,
-    width: 44,
+    width: 52,
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 8,
+    borderRadius: 12,
+    minHeight: 52,
   },
   selectedTags: {
     flexDirection: "row",
     flexWrap: "wrap",
-    marginBottom: 16,
+    marginBottom: 20,
+    gap: 8,
   },
   tagBadge: {
     backgroundColor: "#444",
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginRight: 8,
-    marginBottom: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
   },
   tagText: {
     color: "white",
     fontSize: 14,
-    marginRight: 4,
+    marginRight: 6,
   },
   removeTagButton: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
     backgroundColor: "rgba(255,255,255,0.2)",
     justifyContent: "center",
     alignItems: "center",
   },
   popularTagsLabel: {
     color: "#aaa",
-    fontSize: 14,
-    marginBottom: 8,
+    fontSize: 16,
+    marginBottom: 12,
   },
   popularTagsContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
+    gap: 8,
   },
   popularTag: {
     backgroundColor: "#333",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginRight: 8,
-    marginBottom: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
   },
   popularTagSelected: {
     backgroundColor: "#444",
@@ -482,18 +527,19 @@ const styles = StyleSheet.create({
   },
   createButton: {
     backgroundColor: PRIMARY_APP_COLOR,
-    paddingVertical: 14,
-    borderRadius: 8,
+    paddingVertical: 18,
+    borderRadius: 12,
     alignItems: "center",
-    marginTop: 8,
-    marginBottom: 40,
+    marginTop: 12,
+    minHeight: 56,
+    justifyContent: "center",
   },
   createButtonDisabled: {
     opacity: 0.6,
   },
   createButtonText: {
     color: "white",
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "bold",
   },
 })

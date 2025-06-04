@@ -2,8 +2,10 @@ import { StyleSheet } from "react-native"
 
 export const styles = StyleSheet.create({
   container: {
-    padding: 16,
     flex: 1,
+    backgroundColor: "#1e1e1e",
+  },
+  statusBarFill: {
     backgroundColor: "#1e1e1e",
   },
   header: {
@@ -12,6 +14,8 @@ export const styles = StyleSheet.create({
     marginBottom: 16,
     fontWeight: "bold",
     textAlign: "center",
+    paddingHorizontal: 16,
+    paddingTop: 16,
   },
   input: {
     backgroundColor: "#333",
@@ -20,11 +24,14 @@ export const styles = StyleSheet.create({
     marginBottom: 12,
     borderRadius: 8,
     fontSize: 15,
+    marginHorizontal: 16,
   },
   buttonRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 20,
   },
   buttonPrimary: {
     backgroundColor: "#f3631a",
@@ -55,6 +62,7 @@ export const styles = StyleSheet.create({
     backgroundColor: "#2a2a2a",
     padding: 10,
     borderRadius: 8,
+    marginHorizontal: 16,
   },
   toggleLabel: {
     color: "#fff",
@@ -78,11 +86,13 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 4,
     marginTop: 8,
+    paddingHorizontal: 16,
   },
   coordinateContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 8,
+    paddingHorizontal: 16,
   },
   coordinateField: {
     flex: 1,
@@ -105,14 +115,16 @@ export const styles = StyleSheet.create({
     color: "#fff",
     marginBottom: 16,
     fontWeight: "bold",
+    paddingHorizontal: 16,
+    paddingTop: 16,
   },
   searchModalContainer: {
     flex: 1,
     backgroundColor: "#1e1e1e",
-    padding: 16,
   },
   suggestionItem: {
     paddingVertical: 10,
+    paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#333",
   },
@@ -135,6 +147,7 @@ export const styles = StyleSheet.create({
     height: 1,
     backgroundColor: "#333",
     marginVertical: 12,
+    marginHorizontal: 16,
   },
   compactInput: {
     backgroundColor: "#333",
@@ -143,5 +156,6 @@ export const styles = StyleSheet.create({
     marginBottom: 10,
     borderRadius: 6,
     fontSize: 15,
+    marginHorizontal: 16,
   },
 })

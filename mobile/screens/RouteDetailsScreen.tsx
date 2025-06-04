@@ -1,7 +1,18 @@
 "use client"
 
-import React, { useLayoutEffect, useState, useEffect, useRef } from "react"
-import { View, Text, TouchableOpacity, StyleSheet, Alert, Modal, Image, Clipboard, Dimensions } from "react-native"
+import { useLayoutEffect, useState, useEffect, useRef } from "react"
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  Modal,
+  Image,
+  Clipboard,
+  Dimensions,
+  StatusBar,
+} from "react-native"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import MapView, { Polyline, Marker } from "react-native-maps"
 import { useNavigation, useRoute } from "@react-navigation/native"
@@ -12,7 +23,8 @@ import QRCode from "react-native-qrcode-svg"
 import Brightness from "react-native-screen-brightness"
 import { GOOGLE_MAPS_APIKEY, PRIMARY_APP_COLOR, SERVER_URI } from "../config"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
-import type { RouteDetailsRouteProp, RootStackParamList, RouteType } from "../types/navigation"
+import type { RouteDetailsRouteProp, RootStackParamList } from "../types/navigation"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 type RouteDetailsNavigationProp = NativeStackNavigationProp<RootStackParamList, "RouteDetails">
 
@@ -22,6 +34,7 @@ export default function RouteDetailsScreen() {
   const navigation = useNavigation<RouteDetailsNavigationProp>()
   const route = useRoute<RouteDetailsRouteProp>()
   const routeData = route.params.route
+  const insets = useSafeAreaInsets()
 
   const [menuVisible, setMenuVisible] = useState(false)
   const [shareModalVisible, setShareModalVisible] = useState(false)
@@ -217,6 +230,11 @@ export default function RouteDetailsScreen() {
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
+
+      {/* Status Bar Fill */}
+      <View style={[styles.statusBarFill, { height: insets.top }]} />
+
       {/* Top Nav Bar */}
       <View style={styles.navBar}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -362,19 +380,39 @@ export default function RouteDetailsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#121212" },
-  navBar: {
-    height: 60,
-    backgroundColor: "#1e1e1e",
-    paddingHorizontal: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+  container: {
+    flex: 1,
+    backgroundColor: "#1a1a1a",
   },
-  navTitle: { color: "white", fontSize: 18, fontWeight: "bold" },
-  map: { height: 200, width: "100%" },
-  details: { padding: 16 },
-  detailText: { color: "white", fontSize: 16, marginBottom: 10 },
+  statusBarFill: {
+    backgroundColor: "#1a1a1a",
+  },
+  navBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    backgroundColor: "#1a1a1a",
+  },
+  navTitle: {
+    color: "white",
+    fontSize: 20,
+    fontWeight: "600",
+  },
+  map: {
+    height: 200,
+    width: "100%",
+  },
+  details: {
+    padding: 16,
+    backgroundColor: "#121212",
+  },
+  detailText: {
+    color: "white",
+    fontSize: 16,
+    marginBottom: 10,
+  },
   menuOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.85)",
@@ -386,15 +424,19 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },
-  menuItem: { paddingVertical: 12 },
-  menuText: { fontSize: 18, color: "white" },
   closeButton: {
     position: "absolute",
     top: 10,
     right: 20,
     zIndex: 1,
   },
-  // Share Modal Styles
+  menuItem: {
+    paddingVertical: 12,
+  },
+  menuText: {
+    fontSize: 18,
+    color: "white",
+  },
   shareModalContainer: {
     flex: 1,
     backgroundColor: "#121212",

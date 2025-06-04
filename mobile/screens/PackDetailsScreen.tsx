@@ -1,10 +1,9 @@
 "use client"
 
-import React, { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback } from "react"
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
   TouchableOpacity,
   Image,
@@ -14,6 +13,7 @@ import {
   RefreshControl,
   TextInput,
   FlatList,
+  StatusBar,
 } from "react-native"
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native"
 import AsyncStorage from "@react-native-async-storage/async-storage"
@@ -31,13 +31,14 @@ import {
 } from "lucide-react-native"
 import QRCode from "react-native-qrcode-svg"
 import Brightness from "react-native-screen-brightness"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { SERVER_URI, PRIMARY_APP_COLOR } from "../config"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import type { RouteProp } from "@react-navigation/native"
 import type { RootStackParamList } from "../types/navigation"
 import type { PackDetails } from "../types/Pack"
 import type { RouteType } from "../types/navigation"
-import {styles} from "../styles/PackDetailsScreen.styles"
+import { styles } from "../styles/PackDetailsScreen.styles"
 
 type PackDetailsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, "PackDetails">
 type PackDetailsScreenRouteProp = RouteProp<RootStackParamList, "PackDetails">
@@ -46,6 +47,7 @@ export default function PackDetailsScreen() {
   const navigation = useNavigation<PackDetailsScreenNavigationProp>()
   const route = useRoute<PackDetailsScreenRouteProp>()
   const { pack: initialPack } = route.params
+  const insets = useSafeAreaInsets()
 
   const [pack, setPack] = useState<PackDetails>(initialPack)
   const [loading, setLoading] = useState(false)
@@ -415,6 +417,10 @@ export default function PackDetailsScreen() {
   const renderShareModal = () => (
     <Modal visible={shareModalVisible} animationType="slide">
       <View style={styles.shareModalContainer}>
+        {/* Status Bar Fill */}
+        <View style={[styles.statusBarFill, { height: insets.top }]} />
+
+        {/* Header */}
         <View style={styles.shareModalHeader}>
           <TouchableOpacity onPress={() => setShareModalVisible(false)} style={styles.closeShareButton}>
             <X color="white" size={24} />
@@ -442,6 +448,10 @@ export default function PackDetailsScreen() {
   const renderAddMemberModal = () => (
     <Modal visible={addMemberModalVisible} animationType="slide">
       <View style={styles.modalContainer}>
+        {/* Status Bar Fill */}
+        <View style={[styles.statusBarFill, { height: insets.top }]} />
+
+        {/* Header */}
         <View style={styles.modalHeader}>
           <TouchableOpacity onPress={() => setAddMemberModalVisible(false)} style={styles.closeModalButton}>
             <X color="white" size={24} />
@@ -518,6 +528,10 @@ export default function PackDetailsScreen() {
   const renderAddRouteModal = () => (
     <Modal visible={addRouteModalVisible} animationType="slide">
       <View style={styles.modalContainer}>
+        {/* Status Bar Fill */}
+        <View style={[styles.statusBarFill, { height: insets.top }]} />
+
+        {/* Header */}
         <View style={styles.modalHeader}>
           <TouchableOpacity onPress={() => setAddRouteModalVisible(false)} style={styles.closeModalButton}>
             <X color="white" size={24} />
@@ -587,6 +601,11 @@ export default function PackDetailsScreen() {
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
+
+      {/* Status Bar Fill */}
+      <View style={[styles.statusBarFill, { height: insets.top }]} />
+
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -638,7 +657,7 @@ export default function PackDetailsScreen() {
 
           {pack.tags && pack.tags.length > 0 && (
             <View style={styles.tagsContainer}>
-              {pack.tags.map((tag:any, index:any) => (
+              {pack.tags.map((tag: any, index: any) => (
                 <View key={index} style={styles.tagBadge}>
                   <Text style={styles.tagText}>{tag}</Text>
                 </View>

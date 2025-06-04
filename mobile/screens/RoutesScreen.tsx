@@ -18,6 +18,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage"
 import { Search, Camera } from "lucide-react-native"
 import CreateRouteModal from "../components/CreateRouteModal"
 import QRCodeScanner from "../components/QRCodeScanner"
+import SafeContainer from "../components/SafeContainer"
 import { SERVER_URI } from "../config"
 import { styles as globalStyles } from "../styles/RoutesScreen.styles"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
@@ -255,7 +256,7 @@ export default function RoutesScreen() {
   }
 
   return (
-    <View style={globalStyles.container}>
+    <SafeContainer style={globalStyles.container}>
       <View style={globalStyles.tabs}>
         <TouchableOpacity style={globalStyles.tab} onPress={() => setActiveTab("my")}>
           <Text style={[globalStyles.tabText, activeTab === "my" && globalStyles.activeTabText]}>My Routes</Text>
@@ -285,6 +286,7 @@ export default function RoutesScreen() {
             ) : (
               <ScrollView
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#f3631a"]} />}
+                contentContainerStyle={{ paddingBottom: 120 }}
               >
                 {myRoutes.length > 0 ? (
                   myRoutes.map((route) => <View key={route._id || route.id}>{renderRouteCard(route)}</View>)
@@ -324,7 +326,7 @@ export default function RoutesScreen() {
                 <Text style={styles.loadingText}>Searching...</Text>
               </View>
             ) : searchResults.length > 0 ? (
-              <ScrollView>
+              <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
                 {searchResults.map((route) => (
                   <View key={route._id || route.id}>{renderRouteCard(route)}</View>
                 ))}
@@ -346,7 +348,7 @@ export default function RoutesScreen() {
           <QRCodeScanner onClose={() => setScannerVisible(false)} onCodeScanned={handleQRCodeScanned} />
         </Modal>
       )}
-    </View>
+    </SafeContainer>
   )
 }
 

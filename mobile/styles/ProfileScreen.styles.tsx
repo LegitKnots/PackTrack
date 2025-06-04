@@ -6,12 +6,27 @@ export const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#1a1a1a",
-    paddingBottom: 70, // Add padding to account for tab bar
+  },
+  statusBarFill: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 100, // Covers status bar area
+    backgroundColor: "#2a2a2a",
+    zIndex: 0,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 50, // Reduced from 100 to sit closer to bottom tabs
   },
   headerSection: {
     alignItems: "center",
     paddingVertical: 30,
     paddingHorizontal: 20,
+    paddingTop: 80, // Account for status bar
     backgroundColor: "#2a2a2a",
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,

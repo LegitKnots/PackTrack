@@ -1,11 +1,19 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { View, Text, Dimensions, ActivityIndicator, TouchableOpacity, Image, ScrollView } from "react-native"
+import {
+  View,
+  Text,
+  Dimensions,
+  ActivityIndicator,
+  TouchableOpacity,
+  Image,
+  ScrollView,
+  SafeAreaView,
+} from "react-native"
 import { launchImageLibrary, type ImagePickerResponse, type MediaType } from "react-native-image-picker"
 import { styles } from "../styles/ProfileScreen.styles"
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import { SafeAreaView } from "react-native-safe-area-context"
 import { useNavigation } from "@react-navigation/native"
 import { SERVER_URI } from "../config"
 import MaterialIcons from "react-native-vector-icons/MaterialIcons"
@@ -206,8 +214,13 @@ export default function ProfileScreen() {
   const profileImageUri = userData.profilePicUrl || null
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+    <View style={styles.container}>
+      <View style={styles.statusBarFill} />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        style={styles.scrollView}
+      >
         <View style={styles.headerSection}>
           <View style={styles.avatarContainer}>
             {profileImageUri ? (
@@ -294,6 +307,6 @@ export default function ProfileScreen() {
         buttons={modalConfig.buttons}
         onClose={() => setShowModal(false)}
       />
-    </SafeAreaView>
+    </View>
   )
 }

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { View, Text, TouchableOpacity, Platform, Alert, ActivityIndicator, Animated } from "react-native"
+import { View, Text, TouchableOpacity, Platform, Alert, ActivityIndicator, Animated, StatusBar } from "react-native"
 import {
   GiftedChat,
   type IMessage,
@@ -22,6 +22,7 @@ import { SERVER_URI } from "../config"
 import { useAuth } from "../context/AuthContext"
 import { styles } from "../styles/PackChatScreen.styles"
 import { PanGestureHandler, State } from "react-native-gesture-handler"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 MaterialIcons.loadFont()
 
@@ -51,6 +52,7 @@ export default function PackChatScreen() {
   const navigation = useNavigation()
   const { packId } = route.params
   const { user, token } = useAuth()
+  const insets = useSafeAreaInsets()
 
   const [messages, setMessages] = useState<IMessage[]>([])
   const [loading, setLoading] = useState(true)
@@ -565,15 +567,26 @@ export default function PackChatScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>Loading chat...</Text>
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
+        {/* Status bar background fill */}
+        <View style={[styles.statusBarFill, { height: insets.top }]} />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#f3631a" />
+          <Text style={styles.loadingText}>Loading chat...</Text>
+        </View>
       </View>
     )
   }
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
+
+      {/* Status bar background fill */}
+      <View style={[styles.statusBarFill, { height: insets.top }]} />
+
+      {/* Header positioned right under dynamic island */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <ChevronLeft size={24} color="#fff" />
@@ -584,33 +597,36 @@ export default function PackChatScreen() {
         </TouchableOpacity>
       </View>
 
-      <GiftedChat
-        messages={messages}
-        onSend={onSend}
-        user={currentUser}
-        renderBubble={renderBubble}
-        renderInputToolbar={renderInputToolbar}
-        renderComposer={renderComposer}
-        renderSend={renderSend}
-        renderChatFooter={renderFooter}
-        renderAvatar={renderAvatar}
-        onInputTextChanged={onInputTextChanged}
-        alwaysShowSend
-        keyboardShouldPersistTaps="always"
-        showUserAvatar={true}
-        showAvatarForEveryMessage={true}
-        renderAvatarOnTop={false}
-        inverted={true}
-        bottomOffset={Platform.OS === "ios" ? 0 : 0}
-        minInputToolbarHeight={60}
-        messagesContainerStyle={styles.messagesContainer}
-        textInputProps={{
-          returnKeyType: "send",
-          blurOnSubmit: false,
-          multiline: true,
-          numberOfLines: 4,
-        }}
-      />
+      {/* Chat Content */}
+      <View style={styles.chatContainer}>
+        <GiftedChat
+          messages={messages}
+          onSend={onSend}
+          user={currentUser}
+          renderBubble={renderBubble}
+          renderInputToolbar={renderInputToolbar}
+          renderComposer={renderComposer}
+          renderSend={renderSend}
+          renderChatFooter={renderFooter}
+          renderAvatar={renderAvatar}
+          onInputTextChanged={onInputTextChanged}
+          alwaysShowSend
+          keyboardShouldPersistTaps="always"
+          showUserAvatar={true}
+          showAvatarForEveryMessage={true}
+          renderAvatarOnTop={false}
+          inverted={true}
+          bottomOffset={Platform.OS === "ios" ? Math.max(insets.bottom, 8) : 8}
+          minInputToolbarHeight={60}
+          messagesContainerStyle={styles.messagesContainer}
+          textInputProps={{
+            returnKeyType: "send",
+            blurOnSubmit: false,
+            multiline: true,
+            numberOfLines: 4,
+          }}
+        />
+      </View>
     </View>
   )
 }
