@@ -1,6 +1,6 @@
 'use client';
 
-import {useState, useCallback, useEffect, useRef} from 'react';
+import { useState, useCallback, useRef } from 'react';
 import {
   StyleSheet,
   Text,
@@ -15,16 +15,16 @@ import {
   useCameraDevice,
   useCodeScanner,
 } from 'react-native-vision-camera';
-import {X, Flashlight} from 'lucide-react-native';
-import {PRIMARY_APP_COLOR} from '../config';
-import {useFocusEffect} from '@react-navigation/native';
+import { X, Flashlight } from 'lucide-react-native';
+import { PRIMARY_APP_COLOR } from '../config';
+import { useFocusEffect } from '@react-navigation/native';
 
 interface QRCodeScannerProps {
   onClose: () => void;
   onCodeScanned: (value: string) => void;
 }
 
-const {width} = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 export default function QRCodeScanner({
   onClose,
@@ -36,31 +36,41 @@ export default function QRCodeScanner({
   const cameraRef = useRef<Camera>(null);
   const device = useCameraDevice('back');
 
-  // Request camera permission
-  useEffect(() => {
-    (async () => {
-      const currentStatus = (await Camera.getCameraPermissionStatus()) as
-        | 'authorized'
-        | 'denied'
-        | 'not-determined';
+  
 
-      if (currentStatus === 'authorized') {
+  // Re-check permission every time screen is focused
+  useFocusEffect(
+  useCallback(() => {
+    let isMounted = true;
+
+    (async () => {
+      const status = await Camera.getCameraPermissionStatus() as 'granted' | 'denied' | 'not-determined';
+
+      if (!isMounted) return;
+
+      if (status === 'granted') {
         setHasPermission(true);
-      } else if (currentStatus === 'denied') {
+      } else if (status === 'denied') {
         setHasPermission(false);
       } else {
-        const newStatus = (await Camera.requestCameraPermission()) as
-          | 'authorized'
-          | 'denied';
-        setHasPermission(newStatus === 'authorized');
+        const result = await Camera.requestCameraPermission() as 'granted' | 'denied';
+
+        setHasPermission(result === 'granted');
       }
     })();
-  }, []);
+
+    return () => {
+      isMounted = false;
+      setIsActive(false);
+    };
+  }, [])
+);
+
 
   // QR code scanner handler
   const codeScanner = useCodeScanner({
     codeTypes: ['qr'],
-    onCodeScanned: codes => {
+    onCodeScanned: (codes) => {
       if (codes.length > 0 && isActive) {
         const qrData = codes[0].value;
         if (qrData) {
@@ -70,16 +80,6 @@ export default function QRCodeScanner({
       }
     },
   });
-
-  // Manage camera activity when screen is focused
-  useFocusEffect(
-    useCallback(() => {
-      setIsActive(true);
-      return () => {
-        setIsActive(false);
-      };
-    }, []),
-  );
 
   const toggleTorch = () => {
     setTorch(torch === 'on' ? 'off' : 'on');
@@ -227,12 +227,14 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     marginVertical: 20,
+    textAlign: 'center',
   },
   button: {
     backgroundColor: PRIMARY_APP_COLOR,
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
+    marginTop: 16,
   },
   buttonText: {
     color: 'white',
