@@ -1,25 +1,25 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import { useState, useEffect } from "react"
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   Alert,
-  StyleSheet,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
   Modal,
   Switch,
 } from "react-native"
-import { styles } from '../styles/EditRoute.styles';
+import { styles } from "../styles/EditRoute.styles"
 import { useNavigation, useRoute } from "@react-navigation/native"
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import { ChevronLeft } from "lucide-react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
 import { SERVER_URI, GOOGLE_MAPS_APIKEY, PRIMARY_APP_COLOR } from "../config"
 import type { EditRouteRouteProp } from "../types/navigation"
+import Header from "../components/Header"
 
 export default function EditRoute() {
   const navigation = useNavigation()
@@ -277,156 +277,154 @@ export default function EditRoute() {
   )
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <ChevronLeft color="white" size={26} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit Route</Text>
-        <View style={{ width: 26 }} />
-      </View>
+    <SafeAreaView style={styles.container} edges={["bottom"]}>
+      <Header title="Edit Route" onBackPress={() => navigation.goBack()} />
 
-      <ScrollView style={styles.content}>
-        <Text style={styles.label}>Route Name</Text>
-        <TextInput
-          style={styles.input}
-          value={name}
-          onChangeText={setName}
-          placeholder="Route Name"
-          placeholderTextColor="#aaa"
-        />
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
+        <ScrollView style={styles.content}>
+          <Text style={styles.label}>Route Name</Text>
+          <TextInput
+            style={styles.input}
+            value={name}
+            onChangeText={setName}
+            placeholder="Route Name"
+            placeholderTextColor="#aaa"
+          />
 
-        <Text style={styles.label}>Description</Text>
-        <TextInput
-          style={[styles.input, { height: 80 }]}
-          value={description}
-          onChangeText={setDescription}
-          placeholder="Description (optional)"
-          placeholderTextColor="#aaa"
-          multiline
-        />
+          <Text style={styles.label}>Description</Text>
+          <TextInput
+            style={[styles.input, { height: 80 }]}
+            value={description}
+            onChangeText={setDescription}
+            placeholder="Description (optional)"
+            placeholderTextColor="#aaa"
+            multiline
+          />
 
-        {/* Input Mode Toggle */}
-        <View style={styles.toggleContainer}>
-          <Text style={styles.toggleLabel}>Input Mode:</Text>
-          <View style={styles.toggleOptions}>
-            <Text style={[styles.toggleText, inputMode === "search" && styles.activeToggleText]}>Search</Text>
-            <Switch
-              value={inputMode === "coordinates"}
-              onValueChange={toggleInputMode}
-              trackColor={{ false: "#333", true: PRIMARY_APP_COLOR }}
-              thumbColor="#fff"
-            />
-            <Text style={[styles.toggleText, inputMode === "coordinates" && styles.activeToggleText]}>Coordinates</Text>
+          {/* Input Mode Toggle */}
+          <View style={styles.toggleContainer}>
+            <Text style={styles.toggleLabel}>Input Mode:</Text>
+            <View style={styles.toggleOptions}>
+              <Text style={[styles.toggleText, inputMode === "search" && styles.activeToggleText]}>Search</Text>
+              <Switch
+                value={inputMode === "coordinates"}
+                onValueChange={toggleInputMode}
+                trackColor={{ false: "#333", true: PRIMARY_APP_COLOR }}
+                thumbColor="#fff"
+              />
+              <Text style={[styles.toggleText, inputMode === "coordinates" && styles.activeToggleText]}>
+                Coordinates
+              </Text>
+            </View>
           </View>
-        </View>
 
-        {inputMode === "search" ? (
-          <>
-            <Text style={styles.label}>Start Point</Text>
-            <TouchableOpacity style={styles.input} onPress={() => setShowSearchType("start")}>
-              <Text style={{ color: startPoint ? "#fff" : "#aaa" }}>{startPoint?.label || "Select Start Point"}</Text>
+          {inputMode === "search" ? (
+            <>
+              <Text style={styles.label}>Start Point</Text>
+              <TouchableOpacity style={styles.input} onPress={() => setShowSearchType("start")}>
+                <Text style={{ color: startPoint ? "#fff" : "#aaa" }}>{startPoint?.label || "Select Start Point"}</Text>
+              </TouchableOpacity>
+
+              <Text style={styles.label}>End Point</Text>
+              <TouchableOpacity style={styles.input} onPress={() => setShowSearchType("end")}>
+                <Text style={{ color: endPoint ? "#fff" : "#aaa" }}>{endPoint?.label || "Select End Point"}</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <Text style={styles.label}>Start Point</Text>
+              <TextInput
+                style={styles.input}
+                value={startLabel}
+                onChangeText={setStartLabel}
+                placeholder="Start Point Label"
+                placeholderTextColor="#aaa"
+              />
+
+              <View style={styles.coordinateContainer}>
+                <View style={styles.coordinateField}>
+                  <Text style={styles.coordinateLabel}>Latitude</Text>
+                  <TextInput
+                    style={styles.coordinateInput}
+                    value={startLat}
+                    onChangeText={setStartLat}
+                    placeholder="Latitude"
+                    placeholderTextColor="#aaa"
+                    keyboardType="numeric"
+                  />
+                </View>
+                <View style={styles.coordinateField}>
+                  <Text style={styles.coordinateLabel}>Longitude</Text>
+                  <TextInput
+                    style={styles.coordinateInput}
+                    value={startLng}
+                    onChangeText={setStartLng}
+                    placeholder="Longitude"
+                    placeholderTextColor="#aaa"
+                    keyboardType="numeric"
+                  />
+                </View>
+              </View>
+
+              <Text style={styles.label}>End Point</Text>
+              <TextInput
+                style={styles.input}
+                value={endLabel}
+                onChangeText={setEndLabel}
+                placeholder="End Point Label"
+                placeholderTextColor="#aaa"
+              />
+
+              <View style={styles.coordinateContainer}>
+                <View style={styles.coordinateField}>
+                  <Text style={styles.coordinateLabel}>Latitude</Text>
+                  <TextInput
+                    style={styles.coordinateInput}
+                    value={endLat}
+                    onChangeText={setEndLat}
+                    placeholder="Latitude"
+                    placeholderTextColor="#aaa"
+                    keyboardType="numeric"
+                  />
+                </View>
+                <View style={styles.coordinateField}>
+                  <Text style={styles.coordinateLabel}>Longitude</Text>
+                  <TextInput
+                    style={styles.coordinateInput}
+                    value={endLng}
+                    onChangeText={setEndLng}
+                    placeholder="Longitude"
+                    placeholderTextColor="#aaa"
+                    keyboardType="numeric"
+                  />
+                </View>
+              </View>
+            </>
+          )}
+
+          <Text style={styles.label}>Visibility</Text>
+          <View style={styles.visibilityContainer}>
+            <TouchableOpacity
+              style={[styles.visibilityOption, visibility === "private" && styles.selectedVisibility]}
+              onPress={() => setVisibility("private")}
+            >
+              <Text style={styles.visibilityText}>Private</Text>
             </TouchableOpacity>
-
-            <Text style={styles.label}>End Point</Text>
-            <TouchableOpacity style={styles.input} onPress={() => setShowSearchType("end")}>
-              <Text style={{ color: endPoint ? "#fff" : "#aaa" }}>{endPoint?.label || "Select End Point"}</Text>
+            <TouchableOpacity
+              style={[styles.visibilityOption, visibility === "public" && styles.selectedVisibility]}
+              onPress={() => setVisibility("public")}
+            >
+              <Text style={styles.visibilityText}>Public</Text>
             </TouchableOpacity>
-          </>
-        ) : (
-          <>
-            <Text style={styles.label}>Start Point</Text>
-            <TextInput
-              style={styles.input}
-              value={startLabel}
-              onChangeText={setStartLabel}
-              placeholder="Start Point Label"
-              placeholderTextColor="#aaa"
-            />
+          </View>
 
-            <View style={styles.coordinateContainer}>
-              <View style={styles.coordinateField}>
-                <Text style={styles.coordinateLabel}>Latitude</Text>
-                <TextInput
-                  style={styles.coordinateInput}
-                  value={startLat}
-                  onChangeText={setStartLat}
-                  placeholder="Latitude"
-                  placeholderTextColor="#aaa"
-                  keyboardType="numeric"
-                />
-              </View>
-              <View style={styles.coordinateField}>
-                <Text style={styles.coordinateLabel}>Longitude</Text>
-                <TextInput
-                  style={styles.coordinateInput}
-                  value={startLng}
-                  onChangeText={setStartLng}
-                  placeholder="Longitude"
-                  placeholderTextColor="#aaa"
-                  keyboardType="numeric"
-                />
-              </View>
-            </View>
-
-            <Text style={styles.label}>End Point</Text>
-            <TextInput
-              style={styles.input}
-              value={endLabel}
-              onChangeText={setEndLabel}
-              placeholder="End Point Label"
-              placeholderTextColor="#aaa"
-            />
-
-            <View style={styles.coordinateContainer}>
-              <View style={styles.coordinateField}>
-                <Text style={styles.coordinateLabel}>Latitude</Text>
-                <TextInput
-                  style={styles.coordinateInput}
-                  value={endLat}
-                  onChangeText={setEndLat}
-                  placeholder="Latitude"
-                  placeholderTextColor="#aaa"
-                  keyboardType="numeric"
-                />
-              </View>
-              <View style={styles.coordinateField}>
-                <Text style={styles.coordinateLabel}>Longitude</Text>
-                <TextInput
-                  style={styles.coordinateInput}
-                  value={endLng}
-                  onChangeText={setEndLng}
-                  placeholder="Longitude"
-                  placeholderTextColor="#aaa"
-                  keyboardType="numeric"
-                />
-              </View>
-            </View>
-          </>
-        )}
-
-        <Text style={styles.label}>Visibility</Text>
-        <View style={styles.visibilityContainer}>
-          <TouchableOpacity
-            style={[styles.visibilityOption, visibility === "private" && styles.selectedVisibility]}
-            onPress={() => setVisibility("private")}
-          >
-            <Text style={styles.visibilityText}>Private</Text>
+          <TouchableOpacity style={styles.saveButton} onPress={handleSubmit} disabled={loading}>
+            <Text style={styles.saveButtonText}>{loading ? "Saving..." : "Save Changes"}</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.visibilityOption, visibility === "public" && styles.selectedVisibility]}
-            onPress={() => setVisibility("public")}
-          >
-            <Text style={styles.visibilityText}>Public</Text>
-          </TouchableOpacity>
-        </View>
+        </ScrollView>
 
-        <TouchableOpacity style={styles.saveButton} onPress={handleSubmit} disabled={loading}>
-          <Text style={styles.saveButtonText}>{loading ? "Saving..." : "Save Changes"}</Text>
-        </TouchableOpacity>
-      </ScrollView>
-
-      {showSearchType && renderPlacesModal()}
-    </KeyboardAvoidingView>
+        {showSearchType && renderPlacesModal()}
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   )
 }

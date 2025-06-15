@@ -1,4 +1,5 @@
 import { StyleSheet } from "react-native"
+import { PRIMARY_APP_COLOR } from "../config"
 
 export const styles = StyleSheet.create({
   container: {
@@ -55,6 +56,109 @@ export const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 16,
   },
+  messagesList: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  messagesContent: {
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  messageContainer: {
+    marginBottom: 16,
+    alignItems: "flex-start",
+  },
+  ownMessageContainer: {
+    alignItems: "flex-end",
+  },
+  messageBubble: {
+    backgroundColor: "#2a2a2a",
+    borderRadius: 16,
+    borderBottomLeftRadius: 4,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    maxWidth: "80%",
+  },
+  ownMessageBubble: {
+    backgroundColor: PRIMARY_APP_COLOR,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 4,
+  },
+  senderName: {
+    color: "#ccc",
+    fontSize: 13,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  messageText: {
+    color: "#fff",
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  ownMessageText: {
+    color: "#fff",
+  },
+  messageTime: {
+    color: "#999",
+    fontSize: 12,
+    marginTop: 4,
+    alignSelf: "flex-end",
+  },
+  ownMessageTime: {
+    color: "rgba(255, 255, 255, 0.7)",
+  },
+  systemMessage: {
+    alignItems: "center",
+    marginVertical: 12,
+  },
+  systemMessageText: {
+    color: "#999",
+    fontSize: 14,
+    fontStyle: "italic",
+  },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#2a2a2a",
+    backgroundColor: "#1a1a1a",
+  },
+  messageInput: {
+    flex: 1,
+    backgroundColor: "#2a2a2a",
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingTop: 12,
+    color: "#fff",
+    fontSize: 16,
+    maxHeight: 120,
+    minHeight: 40,
+    marginRight: 12,
+  },
+  sendButton: {
+    backgroundColor: PRIMARY_APP_COLOR,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: PRIMARY_APP_COLOR,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  sendButtonDisabled: {
+    backgroundColor: "#666",
+    shadowOpacity: 0,
+    elevation: 0,
+  },
   messagesContainer: {
     backgroundColor: "#121212",
     paddingHorizontal: 4,
@@ -91,27 +195,6 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     marginRight: 4,
     marginBottom: 6,
-  },
-  sendButton: {
-    backgroundColor: "#f3631a",
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#f3631a",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  sendButtonDisabled: {
-    backgroundColor: "#666",
-    shadowOpacity: 0,
-    elevation: 0,
   },
   typingContainer: {
     paddingHorizontal: 16,
@@ -172,7 +255,7 @@ export const styles = StyleSheet.create({
     marginRight: 12,
   },
   replyLabel: {
-    color: "#f3631a",
+    color: PRIMARY_APP_COLOR,
     fontSize: 12,
     fontWeight: "600",
     marginBottom: 2,
@@ -192,5 +275,15 @@ export const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  errorText: {
+    color: "#ff4444",
+    fontSize: 16,
+    textAlign: "center",
   },
 })
