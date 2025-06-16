@@ -44,6 +44,7 @@ import type {PackDetails} from '../types/Pack';
 import type {RouteType} from '../types/navigation';
 import {styles} from '../styles/PackDetailsScreen.styles';
 import Header from '../components/Header';
+import {SlideUpModal, slideUpModalStyles} from '../components/SlideUpModal';
 
 type PackDetailsScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -450,10 +451,10 @@ export default function PackDetailsScreen() {
   const renderShareModal = () => (
     <Modal visible={shareModalVisible} animationType="slide">
       <View style={styles.shareModalContainer}>
-         <Header
+        <Header
           title={pack.name}
           showBackButton
-          leftIcon='close'
+          leftIcon="close"
           onBackPress={() => setShareModalVisible(false)}
         />
 
@@ -490,7 +491,7 @@ export default function PackDetailsScreen() {
         <Header
           title="Add Members"
           showBackButton
-          leftIcon='close'
+          leftIcon="close"
           onBackPress={() => setAddMemberModalVisible(false)}
         />
 
@@ -578,10 +579,10 @@ export default function PackDetailsScreen() {
   const renderAddRouteModal = () => (
     <Modal visible={addRouteModalVisible} animationType="slide">
       <View style={styles.modalContainer}>
-         <Header
+        <Header
           title="Add Routes"
           showBackButton
-          leftIcon='close'
+          leftIcon="close"
           onBackPress={() => setAddRouteModalVisible(false)}
         />
 
@@ -793,71 +794,75 @@ export default function PackDetailsScreen() {
         </View>
       </ScrollView>
 
-      {/* Menu Modal */}
-      <Modal visible={menuVisible} animationType="slide" transparent>
-        <View style={styles.menuOverlay}>
-          <View style={styles.menuContainer}>
+
+      <SlideUpModal visible={menuVisible} onClose={() => setMenuVisible(false)}>
+        <Text style={styles.modalTitle}></Text>
+
+        {isOwner && (
+          <>
             <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setMenuVisible(false)}>
-              <X color="white" size={24} />
-            </TouchableOpacity>
-
-            {isOwner && (
-              <>
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => {
-                    setMenuVisible(false);
-                    setAddMemberModalVisible(true);
-                  }}>
-                  <Text style={styles.menuText}>Add Members</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => {
-                    setMenuVisible(false);
-                    navigation.navigate('PackSettings', {pack});
-                  }}>
-                  <Text style={styles.menuText}>Edit Pack</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => {
-                    setMenuVisible(false);
-                    handleDeletePack();
-                  }}>
-                  <Text style={[styles.menuText, {color: '#ff4444'}]}>
-                    Delete Pack
-                  </Text>
-                </TouchableOpacity>
-              </>
-            )}
-
-            {!isOwner && isMember && (
-              <TouchableOpacity
-                style={styles.menuItem}
-                onPress={() => {
-                  setMenuVisible(false);
-                  handleLeavePack();
-                }}>
-                <Text style={[styles.menuText, {color: '#ff4444'}]}>
-                  Leave Pack
-                </Text>
-              </TouchableOpacity>
-            )}
-
-            <TouchableOpacity
-              style={styles.menuItem}
+              style={slideUpModalStyles.modalOption}
               onPress={() => {
                 setMenuVisible(false);
-                handleShare();
+                setAddMemberModalVisible(true);
               }}>
-              <Text style={styles.menuText}>Share Pack</Text>
+              <Text style={slideUpModalStyles.modalOptionText}>
+                Add Members
+              </Text>
             </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+            <TouchableOpacity
+              style={slideUpModalStyles.modalOption}
+              onPress={() => {
+                setMenuVisible(false);
+                navigation.navigate('PackSettings', {pack});
+              }}>
+              <Text style={slideUpModalStyles.modalOptionText}>Edit Pack</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={slideUpModalStyles.modalOption}
+              onPress={() => {
+                setMenuVisible(false);
+                handleDeletePack();
+              }}>
+              <Text
+                style={[
+                  slideUpModalStyles.modalOptionText,
+                  {color: '#ff4444'},
+                ]}>
+                Delete Pack
+              </Text>
+            </TouchableOpacity>
+          </>
+        )}
+
+        {!isOwner && isMember && (
+          <TouchableOpacity
+            style={slideUpModalStyles.modalOption}
+            onPress={() => {
+              setMenuVisible(false);
+              handleLeavePack();
+            }}>
+            <Text
+              style={[slideUpModalStyles.modalOptionText, {color: '#ff4444'}]}>
+              Leave Pack
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        <TouchableOpacity
+          style={slideUpModalStyles.modalOption}
+          onPress={() => {
+            setMenuVisible(false);
+            handleShare();
+          }}>
+          <Text style={slideUpModalStyles.modalOptionText}>Share Pack</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={slideUpModalStyles.modalCancelButton}
+          onPress={() => setMenuVisible(false)}>
+          <Text style={slideUpModalStyles.modalCancelText}>Cancel</Text>
+        </TouchableOpacity>
+      </SlideUpModal>
 
       {/* Share Modal */}
       {renderShareModal()}
