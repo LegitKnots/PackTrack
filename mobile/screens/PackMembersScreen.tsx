@@ -11,16 +11,16 @@ import {
   Alert,
   ActivityIndicator,
   Modal,
-  StatusBar,
 } from "react-native"
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native"
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import { ChevronLeft, MoreHorizontal, X, Crown } from "lucide-react-native"
+import { MoreHorizontal, X, Crown } from "lucide-react-native"
 import { SERVER_URI, PRIMARY_APP_COLOR } from "../config"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import type { RouteProp } from "@react-navigation/native"
 import type { RootStackParamList } from "../types/navigation"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
+import Header from "../components/Header"
 
 type PackMembersScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, "PackMembers">
 type PackMembersScreenRouteProp = RouteProp<RootStackParamList, "PackMembers">
@@ -248,19 +248,11 @@ export default function PackMembersScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
-
-      {/* Status bar background fill */}
-      <View style={[styles.statusBarFill, { height: insets.top }]} />
-
-      {/* Header positioned right under dynamic island */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <ChevronLeft size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Pack Members</Text>
-        <View style={{ width: 24 }} />
-      </View>
+       <Header
+          title="Pack Members"
+          showBackButton
+          onBackPress={() => navigation.goBack()}
+        />
 
       {/* Content */}
       {loading ? (
@@ -319,15 +311,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: "#1a1a1a",
-    height: 60,
+    borderBottomWidth: 1,
+    borderBottomColor: "#333",
   },
   backButton: {
-    padding: 8,
+    color: "white",
+    fontSize: 24,
+    fontWeight: "600",
   },
   headerTitle: {
-    color: "#fff",
+    color: "white",
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: "600",
+    flex: 1,
+    textAlign: "center",
+    marginHorizontal: 16,
   },
   loadingContainer: {
     flex: 1,

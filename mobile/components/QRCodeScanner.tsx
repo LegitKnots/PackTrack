@@ -1,95 +1,138 @@
-"use client"
+'use client';
 
-import { useState, useCallback, useEffect, useRef } from "react"
-import { StyleSheet, Text, View, TouchableOpacity, Dimensions, Platform, ActivityIndicator } from "react-native"
-import { Camera, useCameraDevice, useCodeScanner } from "react-native-vision-camera"
-import { X, Flashlight } from "lucide-react-native"
-import { PRIMARY_APP_COLOR } from "../config"
-import { useFocusEffect } from "@react-navigation/native"
+import { useState, useCallback, useRef } from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  Dimensions,
+  Platform,
+  ActivityIndicator,
+} from 'react-native';
+import {
+  Camera,
+  useCameraDevice,
+  useCodeScanner,
+} from 'react-native-vision-camera';
+import { X, Flashlight } from 'lucide-react-native';
+import { PRIMARY_APP_COLOR } from '../config';
+import { useFocusEffect } from '@react-navigation/native';
+import Header from './Header';
 
 interface QRCodeScannerProps {
-  onClose: () => void
-  onCodeScanned: (value: string) => void
+  onClose: () => void;
+  onCodeScanned: (value: string) => void;
 }
 
-const { width } = Dimensions.get("window")
+const { width } = Dimensions.get('window');
 
-export default function QRCodeScanner({ onClose, onCodeScanned }: QRCodeScannerProps) {
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null)
-  const [torch, setTorch] = useState<"off" | "on">("off")
-  const [isActive, setIsActive] = useState(true)
-  const device = useCameraDevice("back")
-  const cameraRef = useRef<Camera>(null)
+export default function QRCodeScanner({
+  onClose,
+  onCodeScanned,
+}: QRCodeScannerProps) {
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [torch, setTorch] = useState<'off' | 'on'>('off');
+  const [isActive, setIsActive] = useState(true);
+  const cameraRef = useRef<Camera>(null);
+  const device = useCameraDevice('back');
 
-  // Request camera permissions
-  useEffect(() => {
-    ;(async () => {
-      const cameraPermission = await Camera.requestCameraPermission()
-      setHasPermission(cameraPermission === "granted")
-    })()
+  
+
+  // Re-check permission every time screen is focused
+  useFocusEffect(
+  useCallback(() => {
+    let isMounted = true;
+
+    (async () => {
+      const status = await Camera.getCameraPermissionStatus() as 'granted' | 'denied' | 'not-determined';
+
+      if (!isMounted) return;
+
+      if (status === 'granted') {
+        setHasPermission(true);
+      } else if (status === 'denied') {
+        setHasPermission(false);
+      } else {
+        const result = await Camera.requestCameraPermission() as 'granted' | 'denied';
+
+        setHasPermission(result === 'granted');
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+      setIsActive(false);
+    };
   }, [])
+);
 
-  // Set up code scanner
+
+  // QR code scanner handler
   const codeScanner = useCodeScanner({
-    codeTypes: ["qr"],
+    codeTypes: ['qr'],
     onCodeScanned: (codes) => {
       if (codes.length > 0 && isActive) {
-        const qrData = codes[0].value
+        const qrData = codes[0].value;
         if (qrData) {
-          setIsActive(false) // Prevent multiple scans
-          onCodeScanned(qrData)
+          setIsActive(false);
+          onCodeScanned(qrData);
         }
       }
     },
-  })
-
-  // Ensure camera is active only when component is focused
-  useFocusEffect(
-    useCallback(() => {
-      setIsActive(true)
-      return () => {
-        setIsActive(false)
-      }
-    }, []),
-  )
+  });
 
   const toggleTorch = () => {
-    setTorch(torch === "on" ? "off" : "on")
-  }
+    setTorch(torch === 'on' ? 'off' : 'on');
+  };
 
   if (hasPermission === null) {
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" color={PRIMARY_APP_COLOR} />
-        <Text style={styles.text}>Requesting camera permission...</Text>
+        <Text style={styles.text}>Checking camera permission...</Text>
       </View>
-    )
+    );
   }
 
   if (hasPermission === false) {
     return (
       <View style={styles.container}>
-        <Text style={styles.text}>No access to camera</Text>
+        <Text style={styles.text}>
+          Camera permission is required to scan QR codes.
+        </Text>
         <TouchableOpacity style={styles.button} onPress={onClose}>
           <Text style={styles.buttonText}>Close</Text>
         </TouchableOpacity>
       </View>
-    )
+    );
   }
 
-  if (device == null) {
+  if (!device) {
     return (
       <View style={styles.container}>
-        <Text style={styles.text}>Camera device not available</Text>
+        <Text style={styles.text}>No camera device available</Text>
         <TouchableOpacity style={styles.button} onPress={onClose}>
           <Text style={styles.buttonText}>Close</Text>
         </TouchableOpacity>
       </View>
-    )
+    );
   }
 
   return (
     <View style={styles.container}>
+      
+      <Header
+        title="Scan QR Code"
+        showBackButton
+        leftIcon="close"
+        onBackPress={() => onClose()}
+        rightIcon="menu"
+        onRightPress={() => toggleTorch()}
+        opacity={50}
+        overlay
+      />
+      
       <Camera
         ref={cameraRef}
         style={styles.camera}
@@ -104,68 +147,57 @@ export default function QRCodeScanner({ onClose, onCodeScanned }: QRCodeScannerP
         <View style={styles.scanArea} />
       </View>
 
-      <View style={styles.header}>
-        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-          <X color="white" size={24} />
-        </TouchableOpacity>
-        <Text style={styles.headerText}>Scan QR Code</Text>
-        <TouchableOpacity onPress={toggleTorch} style={styles.flashButton}>
-          <Flashlight color={torch === "on" ? PRIMARY_APP_COLOR : "white"} size={24} />
-        </TouchableOpacity>
-      </View>
-
       <View style={styles.footer}>
-        <Text style={styles.footerText}>Position the QR code within the frame</Text>
+        <Text style={styles.footerText}>
+          Position the QR code within the frame
+        </Text>
       </View>
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: '#000',
   },
   camera: {
-    width: "100%",
-    height: "100%",
+    width: '100%',
+    height: '100%',
   },
   overlay: {
-    position: "absolute",
+    position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   scanArea: {
     width: width * 0.7,
     height: width * 0.7,
     borderWidth: 2,
     borderColor: PRIMARY_APP_COLOR,
-    backgroundColor: "transparent",
+    backgroundColor: 'transparent',
   },
   header: {
-    position: "absolute",
-    top: Platform.OS === "ios" ? 50 : 20,
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 50 : 20,
     left: 0,
     right: 0,
     height: 60,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: 'rgba(0,0,0,0.5)',
     zIndex: 10,
   },
   headerText: {
-    color: "white",
+    color: 'white',
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   closeButton: {
     padding: 8,
@@ -174,35 +206,37 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   footer: {
-    position: "absolute",
+    position: 'absolute',
     bottom: 50,
     left: 0,
     right: 0,
-    alignItems: "center",
+    alignItems: 'center',
   },
   footerText: {
-    color: "white",
+    color: 'white',
     fontSize: 14,
-    textAlign: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
+    textAlign: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
   },
   text: {
-    color: "white",
+    color: 'white',
     fontSize: 16,
     marginVertical: 20,
+    textAlign: 'center',
   },
   button: {
     backgroundColor: PRIMARY_APP_COLOR,
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
+    marginTop: 16,
   },
   buttonText: {
-    color: "white",
+    color: 'white',
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
-})
+});

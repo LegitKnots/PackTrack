@@ -23,6 +23,7 @@ import { useAuth } from "../context/AuthContext"
 import { styles } from "../styles/PackChatScreen.styles"
 import { PanGestureHandler, State } from "react-native-gesture-handler"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
+import Header from "../components/Header"
 
 MaterialIcons.loadFont()
 
@@ -53,6 +54,8 @@ export default function PackChatScreen() {
   const { packId } = route.params
   const { user, token } = useAuth()
   const insets = useSafeAreaInsets()
+
+  const [infoVisible, setInfoVisible] = useState(false);
 
   const [messages, setMessages] = useState<IMessage[]>([])
   const [loading, setLoading] = useState(true)
@@ -581,13 +584,13 @@ export default function PackChatScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
+      {/* <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" /> */}
 
       {/* Status bar background fill */}
-      <View style={[styles.statusBarFill, { height: insets.top }]} />
+      {/* <View style={[styles.statusBarFill, { height: insets.top }]} /> */}
 
       {/* Header positioned right under dynamic island */}
-      <View style={styles.header}>
+      {/* <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <ChevronLeft size={24} color="#fff" />
         </TouchableOpacity>
@@ -595,7 +598,15 @@ export default function PackChatScreen() {
         <TouchableOpacity style={styles.infoButton}>
           <Info size={24} color="#fff" />
         </TouchableOpacity>
-      </View>
+      </View> */}
+
+      <Header
+        title={packName}
+        showBackButton
+        onBackPress={() => navigation.goBack()}
+        rightIcon="info"
+        onRightPress={() => setInfoVisible(true)}
+      />
 
       {/* Chat Content */}
       <View style={styles.chatContainer}>

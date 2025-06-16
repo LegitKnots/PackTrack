@@ -22,6 +22,7 @@ import { launchImageLibrary } from "react-native-image-picker"
 import { SERVER_URI, PRIMARY_APP_COLOR } from "../config"
 import type { PackDetails } from "../types/Pack"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
+import Header from "./Header"
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window")
 
@@ -173,13 +174,13 @@ export default function CreatePackModal({ visible, onClose, onCreate }: CreatePa
         {/* Status bar background fill */}
         <View style={[styles.statusBarFill, { height: insets.top }]} />
 
-        {/* Header positioned right under dynamic island */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Create New Pack</Text>
-          <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-            <X color="white" size={24} />
-          </TouchableOpacity>
-        </View>
+             <Header
+               title="Create New Pack"
+               showBackButton
+               leftIcon="close"
+               onBackPress={() => onClose()}
+               />
+       
 
         <ScrollView
           style={styles.content}

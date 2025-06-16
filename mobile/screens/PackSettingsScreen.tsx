@@ -23,6 +23,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import type { RouteProp } from "@react-navigation/native"
 import type { RootStackParamList } from "../types/navigation"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
+import Header from "../components/Header"
 
 type PackSettingsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, "PackSettings">
 type PackSettingsScreenRouteProp = RouteProp<RootStackParamList, "PackSettings">
@@ -154,19 +155,11 @@ export default function PackSettingsScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
-
-      {/* Status bar background fill */}
-      <View style={[styles.statusBarFill, { height: insets.top }]} />
-
-      {/* Header positioned right under dynamic island */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <ChevronLeft size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit Pack</Text>
-        <View style={{ width: 24 }} />
-      </View>
+      <Header
+        title="Edit Pack"
+        showBackButton
+        onBackPress={() => navigation.goBack()}
+      />
 
       {/* Content */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
