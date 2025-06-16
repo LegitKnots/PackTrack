@@ -20,6 +20,14 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { SERVER_URI, GOOGLE_MAPS_APIKEY, PRIMARY_APP_COLOR } from "../config"
 import type { EditRouteRouteProp } from "../types/navigation"
 import Header from "../components/Header"
+import { Plus, X, MapPin, Navigation, Flag } from "lucide-react-native"
+
+interface Waypoint {
+  label: string
+  lat: number
+  lng: number
+  order: number
+}
 
 export default function EditRoute() {
   const navigation = useNavigation()
@@ -30,39 +38,130 @@ export default function EditRoute() {
   const [description, setDescription] = useState(routeData.description || "")
   const [visibility, setVisibility] = useState(routeData.visibility || "private")
   const [loading, setLoading] = useState(false)
-  const [showSearchType, setShowSearchType] = useState<"start" | "end" | null>(null)
+  const [showSearchType, setShowSearchType] = useState<"start" | "waypoint" | "end" | number | null>(null)
   const [startPoint, setStartPoint] = useState(routeData.waypoints?.[0] || null)
-  const [endPoint, setEndPoint] = useState(routeData.waypoints?.[1] || null)
+  const [endPoint, setEndPoint] = useState(routeData.waypoints?.[routeData.waypoints.length - 1] || null)
   const [query, setQuery] = useState("")
   const [suggestions, setSuggestions] = useState<any[]>([])
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
-  const [inputRef, setInputRef] = useState<TextInput | null>(null)
 
-  // New state for coordinate input mode
+  // Waypoints state (excluding start and end)
+  const [waypoints, setWaypoints] = useState<Waypoint[]>(routeData.waypoints?.slice(1, -1) || [])
+
+  // Input mode state
   const [inputMode, setInputMode] = useState<"search" | "coordinates">("search")
   const [startLat, setStartLat] = useState(routeData.waypoints?.[0]?.lat?.toString() || "")
   const [startLng, setStartLng] = useState(routeData.waypoints?.[0]?.lng?.toString() || "")
-  const [endLat, setEndLat] = useState(routeData.waypoints?.[1]?.lat?.toString() || "")
-  const [endLng, setEndLng] = useState(routeData.waypoints?.[1]?.lng?.toString() || "")
-
-  // New state for labels in coordinate mode
+  const [endLat, setEndLat] = useState(routeData.waypoints?.[routeData.waypoints.length - 1]?.lat?.toString() || "")
+  const [endLng, setEndLng] = useState(routeData.waypoints?.[routeData.waypoints.length - 1]?.lng?.toString() || "")
   const [startLabel, setStartLabel] = useState(routeData.waypoints?.[0]?.label || "Start Point")
-  const [endLabel, setEndLabel] = useState(routeData.waypoints?.[1]?.label || "End Point")
+  const [endLabel, setEndLabel] = useState(routeData.waypoints?.[routeData.waypoints.length - 1]?.label || "End Point")
 
-  // Toggle between search and coordinate input modes
+  // Waypoint coordinate states
+  const [waypointCoords, setWaypointCoords] = useState<{ [key: number]: { lat: string; lng: string; label: string } }>(
+    {},
+  )
+
+  // Waypoint name states for search mode
+  const [waypointNames, setWaypointNames] = useState<{ [key: number]: string }>({})
+
+  // Initialize waypoint coordinates and names
+  useEffect(() => {
+    const coords: { [key: number]: { lat: string; lng: string; label: string } } = {}
+    const names: { [key: number]: string } = {}
+    waypoints.forEach((wp, index) => {
+      coords[index] = {
+        lat: wp.lat.toString(),
+        lng: wp.lng.toString(),
+        label: wp.label,
+      }
+      names[index] = wp.label
+    })
+    setWaypointCoords(coords)
+    setWaypointNames(names)
+  }, [])
+
   const toggleInputMode = () => {
     if (inputMode === "search") {
-      // Update coordinate fields when switching to coordinate mode
       setStartLat(startPoint?.lat?.toString() || "")
       setStartLng(startPoint?.lng?.toString() || "")
       setEndLat(endPoint?.lat?.toString() || "")
       setEndLng(endPoint?.lng?.toString() || "")
       setStartLabel(startPoint?.label || "Start Point")
       setEndLabel(endPoint?.label || "End Point")
+
+      const coords: { [key: number]: { lat: string; lng: string; label: string } } = {}
+      waypoints.forEach((wp, index) => {
+        coords[index] = {
+          lat: wp.lat.toString(),
+          lng: wp.lng.toString(),
+          label: wp.label,
+        }
+      })
+      setWaypointCoords(coords)
       setInputMode("coordinates")
     } else {
       setInputMode("search")
     }
+  }
+
+  const addWaypoint = () => {
+    const newWaypoint: Waypoint = {
+      label: `Waypoint ${waypoints.length + 1}`,
+      lat: 0,
+      lng: 0,
+      order: waypoints.length + 1,
+    }
+    setWaypoints([...waypoints, newWaypoint])
+
+    setWaypointCoords((prev) => ({
+      ...prev,
+      [waypoints.length]: {
+        lat: "",
+        lng: "",
+        label: `Waypoint ${waypoints.length + 1}`,
+      },
+    }))
+
+    setWaypointNames((prev) => ({
+      ...prev,
+      [waypoints.length]: `Waypoint ${waypoints.length + 1}`,
+    }))
+  }
+
+  const removeWaypoint = (index: number) => {
+    const newWaypoints = waypoints.filter((_, i) => i !== index)
+    setWaypoints(newWaypoints)
+
+    const newCoords: { [key: number]: { lat: string; lng: string; label: string } } = {}
+    const newNames: { [key: number]: string } = {}
+    newWaypoints.forEach((wp, i) => {
+      if (waypointCoords[i < index ? i : i + 1]) {
+        newCoords[i] = waypointCoords[i < index ? i : i + 1]
+      }
+      if (waypointNames[i < index ? i : i + 1]) {
+        newNames[i] = waypointNames[i < index ? i : i + 1]
+      }
+    })
+    setWaypointCoords(newCoords)
+    setWaypointNames(newNames)
+  }
+
+  const updateWaypointCoord = (index: number, field: "lat" | "lng" | "label", value: string) => {
+    setWaypointCoords((prev) => ({
+      ...prev,
+      [index]: {
+        ...prev[index],
+        [field]: value,
+      },
+    }))
+  }
+
+  const updateWaypointName = (index: number, name: string) => {
+    setWaypointNames((prev) => ({
+      ...prev,
+      [index]: name,
+    }))
   }
 
   useEffect(() => {
@@ -106,7 +205,7 @@ export default function EditRoute() {
           label: details.name || fallbackLabel,
           lat: details.geometry.location.lat,
           lng: details.geometry.location.lng,
-          order: showSearchType === "start" ? 0 : 1,
+          order: 0,
         }
 
         if (showSearchType === "start") {
@@ -114,11 +213,27 @@ export default function EditRoute() {
           setStartLat(point.lat.toString())
           setStartLng(point.lng.toString())
           setStartLabel(point.label)
-        } else {
+        } else if (showSearchType === "end") {
           setEndPoint(point)
           setEndLat(point.lat.toString())
           setEndLng(point.lng.toString())
           setEndLabel(point.label)
+        } else if (typeof showSearchType === "number") {
+          const newWaypoints = [...waypoints]
+          newWaypoints[showSearchType] = {
+            ...point,
+            order: showSearchType + 1,
+          }
+          setWaypoints(newWaypoints)
+
+          setWaypointCoords((prev) => ({
+            ...prev,
+            [showSearchType]: {
+              lat: point.lat.toString(),
+              lng: point.lng.toString(),
+              label: point.label,
+            },
+          }))
         }
 
         setQuery("")
@@ -145,17 +260,16 @@ export default function EditRoute() {
   const handleSubmit = async () => {
     let finalStartPoint = startPoint
     let finalEndPoint = endPoint
+    let finalWaypoints = waypoints
 
-    // If in coordinate mode, create points from the lat/lng inputs
     if (inputMode === "coordinates") {
       const startLatNum = Number.parseFloat(startLat)
       const startLngNum = Number.parseFloat(startLng)
       const endLatNum = Number.parseFloat(endLat)
       const endLngNum = Number.parseFloat(endLng)
 
-      // Validate coordinates
       if (isNaN(startLatNum) || isNaN(startLngNum) || isNaN(endLatNum) || isNaN(endLngNum)) {
-        Alert.alert("Error", "Please enter valid coordinates")
+        Alert.alert("Error", "Please enter valid coordinates for start and end points")
         return
       }
 
@@ -170,8 +284,34 @@ export default function EditRoute() {
         label: endLabel || "End Point",
         lat: endLatNum,
         lng: endLngNum,
-        order: 1,
+        order: waypoints.length + 1,
       }
+
+      finalWaypoints = waypoints.map((wp, index) => {
+        const coords = waypointCoords[index]
+        if (coords) {
+          const lat = Number.parseFloat(coords.lat)
+          const lng = Number.parseFloat(coords.lng)
+
+          if (isNaN(lat) || isNaN(lng)) {
+            throw new Error(`Invalid coordinates for waypoint ${index + 1}`)
+          }
+
+          return {
+            label: coords.label || `Waypoint ${index + 1}`,
+            lat,
+            lng,
+            order: index + 1,
+          }
+        }
+        return wp
+      })
+    } else {
+      // In search mode, update waypoint labels from names
+      finalWaypoints = waypoints.map((wp, index) => ({
+        ...wp,
+        label: waypointNames[index] || wp.label,
+      }))
     }
 
     if (!name || !finalStartPoint || !finalEndPoint) {
@@ -197,15 +337,18 @@ export default function EditRoute() {
         finalEndPoint.lng,
       )
 
+      const allWaypoints = [
+        { ...finalStartPoint, order: 0 },
+        ...finalWaypoints.map((wp, index) => ({ ...wp, order: index + 1 })),
+        { ...finalEndPoint, order: finalWaypoints.length + 1 },
+      ]
+
       const payload = {
         name,
         description,
         visibility,
         distance,
-        waypoints: [
-          { ...finalStartPoint, order: 0 },
-          { ...finalEndPoint, order: 1 },
-        ],
+        waypoints: allWaypoints,
       }
 
       const res = await fetch(`${SERVER_URI}/api/routes/${routeData._id || routeData.id}`, {
@@ -238,16 +381,27 @@ export default function EditRoute() {
     }
   }
 
+  const getSearchTypeLabel = () => {
+    if (showSearchType === "start") return "start"
+    if (showSearchType === "end") return "end"
+    if (typeof showSearchType === "number") return `waypoint ${showSearchType + 1}`
+    return ""
+  }
+
   const renderPlacesModal = () => (
-    <Modal visible={!!showSearchType} animationType="slide">
+    <Modal visible={showSearchType !== null} animationType="slide">
       <View style={styles.modalContainer}>
+        <Text style={{ color: "#fff", fontSize: 18, fontWeight: "bold", marginBottom: 16 }}>
+          Search for {getSearchTypeLabel()} location
+        </Text>
+
         <TextInput
-          ref={setInputRef}
-          placeholder={`Search for ${showSearchType} location`}
+          placeholder={`Search for ${getSearchTypeLabel()} location`}
           placeholderTextColor="#5e5e5e"
           value={query}
           onChangeText={setQuery}
-          style={styles.input}
+          style={styles.searchInput}
+          autoFocus
         />
 
         {query.length > 1 &&
@@ -269,12 +423,112 @@ export default function EditRoute() {
             <Text style={styles.loadingText}>No results found.</Text>
           ))}
 
-        <TouchableOpacity onPress={() => setShowSearchType(null)} style={styles.cancelButton}>
-          <Text style={styles.cancelText}>Cancel</Text>
+        <TouchableOpacity onPress={() => setShowSearchType(null)} style={styles.modalCancelButton}>
+          <Text style={styles.modalCancelText}>Cancel</Text>
         </TouchableOpacity>
       </View>
     </Modal>
   )
+
+  const renderLocationCard = (type: "start" | "waypoint" | "end", index?: number) => {
+    const isWaypoint = type === "waypoint" && index !== undefined
+    const point = type === "start" ? startPoint : type === "end" ? endPoint : waypoints[index!]
+
+    const handleLocationPress = () => {
+      console.log("Location pressed:", type, index) // Debug log
+      if (type === "waypoint" && index !== undefined) {
+        setShowSearchType(index)
+      } else {
+        setShowSearchType(type)
+      }
+    }
+
+    return (
+      <View style={styles.locationCard}>
+        <View style={styles.locationHeader}>
+          <View style={styles.locationTitle}>
+            {type === "start" && <Navigation color="#4CAF50" size={20} />}
+            {type === "waypoint" && <MapPin color={PRIMARY_APP_COLOR} size={20} />}
+            {type === "end" && <Flag color="#f44336" size={20} />}
+            <Text style={styles.locationTitleText}>
+              {type === "start" ? "Start Point" : type === "end" ? "End Point" : `Waypoint ${(index || 0) + 1}`}
+            </Text>
+          </View>
+          {isWaypoint && (
+            <TouchableOpacity onPress={() => removeWaypoint(index!)} style={styles.removeButton}>
+              <X color="#ff4444" size={18} />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {inputMode === "search" ? (
+          <>
+            {isWaypoint && (
+              <TextInput
+                style={styles.waypointNameInput}
+                value={waypointNames[index!] || ""}
+                onChangeText={(text) => updateWaypointName(index!, text)}
+                placeholder="Waypoint name"
+                placeholderTextColor="#aaa"
+              />
+            )}
+            <TouchableOpacity style={styles.input} onPress={handleLocationPress}>
+              <Text style={{ color: point?.label ? "#fff" : "#aaa" }}>
+                {point?.label || `Select ${type === "start" ? "start" : type === "end" ? "end" : "waypoint"} location`}
+              </Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            <TextInput
+              style={styles.input}
+              value={type === "start" ? startLabel : type === "end" ? endLabel : waypointCoords[index!]?.label || ""}
+              onChangeText={(text) => {
+                if (type === "start") setStartLabel(text)
+                else if (type === "end") setEndLabel(text)
+                else updateWaypointCoord(index!, "label", text)
+              }}
+              placeholder="Location Label"
+              placeholderTextColor="#aaa"
+            />
+
+            <View style={styles.coordinateContainer}>
+              <View style={styles.coordinateField}>
+                <Text style={styles.coordinateLabel}>Latitude</Text>
+                <TextInput
+                  style={styles.coordinateInput}
+                  value={type === "start" ? startLat : type === "end" ? endLat : waypointCoords[index!]?.lat || ""}
+                  onChangeText={(text) => {
+                    if (type === "start") setStartLat(text)
+                    else if (type === "end") setEndLat(text)
+                    else updateWaypointCoord(index!, "lat", text)
+                  }}
+                  placeholder="Latitude"
+                  placeholderTextColor="#aaa"
+                  keyboardType="numeric"
+                />
+              </View>
+              <View style={styles.coordinateField}>
+                <Text style={styles.coordinateLabel}>Longitude</Text>
+                <TextInput
+                  style={styles.coordinateInput}
+                  value={type === "start" ? startLng : type === "end" ? endLng : waypointCoords[index!]?.lng || ""}
+                  onChangeText={(text) => {
+                    if (type === "start") setStartLng(text)
+                    else if (type === "end") setEndLng(text)
+                    else updateWaypointCoord(index!, "lng", text)
+                  }}
+                  placeholder="Longitude"
+                  placeholderTextColor="#aaa"
+                  keyboardType="numeric"
+                />
+              </View>
+            </View>
+          </>
+        )}
+      </View>
+    )
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={["bottom"]}>
@@ -293,7 +547,7 @@ export default function EditRoute() {
 
           <Text style={styles.label}>Description</Text>
           <TextInput
-            style={[styles.input, { height: 80 }]}
+            style={[styles.input, styles.textArea]}
             value={description}
             onChangeText={setDescription}
             placeholder="Description (optional)"
@@ -318,89 +572,20 @@ export default function EditRoute() {
             </View>
           </View>
 
-          {inputMode === "search" ? (
-            <>
-              <Text style={styles.label}>Start Point</Text>
-              <TouchableOpacity style={styles.input} onPress={() => setShowSearchType("start")}>
-                <Text style={{ color: startPoint ? "#fff" : "#aaa" }}>{startPoint?.label || "Select Start Point"}</Text>
-              </TouchableOpacity>
+          <Text style={styles.sectionTitle}>Route Points</Text>
 
-              <Text style={styles.label}>End Point</Text>
-              <TouchableOpacity style={styles.input} onPress={() => setShowSearchType("end")}>
-                <Text style={{ color: endPoint ? "#fff" : "#aaa" }}>{endPoint?.label || "Select End Point"}</Text>
-              </TouchableOpacity>
-            </>
-          ) : (
-            <>
-              <Text style={styles.label}>Start Point</Text>
-              <TextInput
-                style={styles.input}
-                value={startLabel}
-                onChangeText={setStartLabel}
-                placeholder="Start Point Label"
-                placeholderTextColor="#aaa"
-              />
+          {renderLocationCard("start")}
 
-              <View style={styles.coordinateContainer}>
-                <View style={styles.coordinateField}>
-                  <Text style={styles.coordinateLabel}>Latitude</Text>
-                  <TextInput
-                    style={styles.coordinateInput}
-                    value={startLat}
-                    onChangeText={setStartLat}
-                    placeholder="Latitude"
-                    placeholderTextColor="#aaa"
-                    keyboardType="numeric"
-                  />
-                </View>
-                <View style={styles.coordinateField}>
-                  <Text style={styles.coordinateLabel}>Longitude</Text>
-                  <TextInput
-                    style={styles.coordinateInput}
-                    value={startLng}
-                    onChangeText={setStartLng}
-                    placeholder="Longitude"
-                    placeholderTextColor="#aaa"
-                    keyboardType="numeric"
-                  />
-                </View>
-              </View>
+          {waypoints.map((_, index) => renderLocationCard("waypoint", index))}
 
-              <Text style={styles.label}>End Point</Text>
-              <TextInput
-                style={styles.input}
-                value={endLabel}
-                onChangeText={setEndLabel}
-                placeholder="End Point Label"
-                placeholderTextColor="#aaa"
-              />
+          <TouchableOpacity style={styles.addWaypointButton} onPress={addWaypoint}>
+            <View style={styles.addWaypointContent}>
+              <Plus color="#fff" size={20} />
+              <Text style={styles.addWaypointText}>Add Waypoint</Text>
+            </View>
+          </TouchableOpacity>
 
-              <View style={styles.coordinateContainer}>
-                <View style={styles.coordinateField}>
-                  <Text style={styles.coordinateLabel}>Latitude</Text>
-                  <TextInput
-                    style={styles.coordinateInput}
-                    value={endLat}
-                    onChangeText={setEndLat}
-                    placeholder="Latitude"
-                    placeholderTextColor="#aaa"
-                    keyboardType="numeric"
-                  />
-                </View>
-                <View style={styles.coordinateField}>
-                  <Text style={styles.coordinateLabel}>Longitude</Text>
-                  <TextInput
-                    style={styles.coordinateInput}
-                    value={endLng}
-                    onChangeText={setEndLng}
-                    placeholder="Longitude"
-                    placeholderTextColor="#aaa"
-                    keyboardType="numeric"
-                  />
-                </View>
-              </View>
-            </>
-          )}
+          {renderLocationCard("end")}
 
           <Text style={styles.label}>Visibility</Text>
           <View style={styles.visibilityContainer}>
@@ -423,7 +608,7 @@ export default function EditRoute() {
           </TouchableOpacity>
         </ScrollView>
 
-        {showSearchType && renderPlacesModal()}
+        {renderPlacesModal()}
       </KeyboardAvoidingView>
     </SafeAreaView>
   )
