@@ -7,6 +7,7 @@ import { styles } from "../styles/CreateModal.styles"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { SERVER_URI, GOOGLE_MAPS_APIKEY } from "../config"
 import { v4 as uuidv4 } from "uuid"
+import Header from "./Header"
 
 interface CreateRouteModalProps {
   visible: boolean
@@ -233,12 +234,8 @@ export default function CreateRouteModal({ visible, onClose, onCreate }: CreateR
   return (
     <Modal visible={visible} animationType="slide">
       <View style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor="#1e1e1e" />
-
-        {/* Status Bar Fill */}
-        <View style={[styles.statusBarFill, { height: insets.top }]} />
-
-        <Text style={styles.header}>New Route</Text>
+        
+        <Header title="New Route" leftIcon="close" showBackButton onBackPress={onClose}/>
 
         <View style={styles.toggleContainer}>
           <Text style={styles.toggleLabel}>Input Mode</Text>
@@ -360,9 +357,6 @@ export default function CreateRouteModal({ visible, onClose, onCreate }: CreateR
         />
 
         <View style={styles.buttonRow}>
-          <TouchableOpacity onPress={onClose} style={styles.buttonCancel}>
-            <Text style={styles.buttonText}>Cancel</Text>
-          </TouchableOpacity>
           <TouchableOpacity onPress={handleSubmit} style={styles.buttonPrimary} disabled={loading}>
             <Text style={styles.buttonText}>{loading ? "Creating..." : "Create"}</Text>
           </TouchableOpacity>

@@ -20,6 +20,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import type { RouteProp } from "@react-navigation/native"
 import type { RootStackParamList } from "../types/navigation"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
+import Header from "../components/Header"
 
 type PackMembersScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, "PackMembers">
 type PackMembersScreenRouteProp = RouteProp<RootStackParamList, "PackMembers">
@@ -247,17 +248,11 @@ export default function PackMembersScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Status Bar Fill */}
-      <View style={[styles.statusBarFill, { height: insets.top }]} />
-
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backButton}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Pack Members</Text>
-        <View style={{ width: 24 }} />
-      </View>
+       <Header
+          title="Pack Members"
+          showBackButton
+          onBackPress={() => navigation.goBack()}
+        />
 
       {/* Content */}
       {loading ? (

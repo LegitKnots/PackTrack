@@ -25,6 +25,7 @@ import { GOOGLE_MAPS_APIKEY, PRIMARY_APP_COLOR, SERVER_URI } from "../config"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import type { RouteDetailsRouteProp, RootStackParamList } from "../types/navigation"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
+import Header from "../components/Header"
 
 type RouteDetailsNavigationProp = NativeStackNavigationProp<RootStackParamList, "RouteDetails">
 
@@ -230,21 +231,14 @@ export default function RouteDetailsScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
 
-      {/* Status Bar Fill */}
-      <View style={[styles.statusBarFill, { height: insets.top }]} />
-
-      {/* Top Nav Bar */}
-      <View style={styles.navBar}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <ChevronLeft color="white" size={26} />
-        </TouchableOpacity>
-        <Text style={styles.navTitle}>{routeData.name}</Text>
-        <TouchableOpacity onPress={() => setMenuVisible(true)}>
-          <MoreHorizontal color="white" size={24} />
-        </TouchableOpacity>
-      </View>
+      <Header
+        title={routeData.name}
+        showBackButton
+        onBackPress={() => navigation.goBack()}
+        rightIcon="menu"
+        onRightPress={() => setMenuVisible(true)}
+        />
 
       {/* Map */}
       <MapView
@@ -254,6 +248,7 @@ export default function RouteDetailsScreen() {
         showsMyLocationButton={false}
         scrollEnabled={false}
         zoomEnabled={false}
+        rotateEnabled={false}
         initialRegion={{
           latitude: routeData.waypoints?.[0]?.lat || 37.78825,
           longitude: routeData.waypoints?.[0]?.lng || -122.4324,

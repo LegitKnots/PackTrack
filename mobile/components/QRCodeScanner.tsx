@@ -18,6 +18,7 @@ import {
 import { X, Flashlight } from 'lucide-react-native';
 import { PRIMARY_APP_COLOR } from '../config';
 import { useFocusEffect } from '@react-navigation/native';
+import Header from './Header';
 
 interface QRCodeScannerProps {
   onClose: () => void;
@@ -120,6 +121,18 @@ export default function QRCodeScanner({
 
   return (
     <View style={styles.container}>
+      
+      <Header
+        title="Scan QR Code"
+        showBackButton
+        leftIcon="close"
+        onBackPress={() => onClose()}
+        rightIcon="menu"
+        onRightPress={() => toggleTorch()}
+        opacity={50}
+        overlay
+      />
+      
       <Camera
         ref={cameraRef}
         style={styles.camera}
@@ -132,19 +145,6 @@ export default function QRCodeScanner({
 
       <View style={styles.overlay}>
         <View style={styles.scanArea} />
-      </View>
-
-      <View style={styles.header}>
-        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-          <X color="white" size={24} />
-        </TouchableOpacity>
-        <Text style={styles.headerText}>Scan QR Code</Text>
-        <TouchableOpacity onPress={toggleTorch} style={styles.flashButton}>
-          <Flashlight
-            color={torch === 'on' ? PRIMARY_APP_COLOR : 'white'}
-            size={24}
-          />
-        </TouchableOpacity>
       </View>
 
       <View style={styles.footer}>
@@ -160,8 +160,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   camera: {
     width: '100%',
