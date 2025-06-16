@@ -8,3 +8,10 @@ Route Sharing - Button the share a route doesnt do anything except continue to p
 
 
 Route Deatils screen needs to be finished, ill focus on that now
+
+once you login, its possible to slide from left to right and go back to the login and signup page, this should NOT be possible
+
+
+Pack Preview screen shows User ID as owner instead of Username
+
+Notifications on dashboard show the full JSON constents instead of formatting it properly
