@@ -80,7 +80,7 @@ export default function Header({
       <View style={{ height: insets.top, backgroundColor }} />
 
       {/* Header container */}
-      <View style={[styles.headerContainer, { backgroundColor, opacity: clampedOpacity, position: opacity? "absolute" : "relative", top: insets.top}]}>
+      <View style={[styles.headerContainer, { backgroundColor, opacity: clampedOpacity, position: overlay? "absolute" : "static", top: insets.top}]}>
         {/* Left Icon */}
         <View style={styles.sideIconContainer}>
           {showBackButton && onBackPress && (
